@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"iter"
 	"reflect"
+	"slices"
 )
 
 type typeNameKey struct {
@@ -111,4 +112,49 @@ func (s *Scope) invokeInstance(key typeNameKey) (any, error) {
 	anyIns := ins.Interface()
 	s.instances[key] = anyIns
 	return anyIns, nil
+}
+
+// sort by dependency depth, shallowest first.
+func (s *Scope) invokeInstanceAsMany(key typeNameKey) iter.Seq2[any, error] {
+	var regs []registration
+	for _, reg := range s.registrations {
+		_key := reg.Key()
+		if _key.Name != key.Name {
+			continue
+		}
+		if _key == key {
+			regs = append(regs, reg)
+			continue
+		}
+		if _key.Ty.Implements(key.Ty) {
+			regs = append(regs, reg)
+			continue
+		}
+	}
+	slices.SortFunc(regs, func(a, b registration) int {
+		return a.dependencyDepth() - b.dependencyDepth()
+	})
+
+	return func(yield func(any, error) bool) {
+		for _, reg := range regs {
+			if val, ok := s.instances[reg.Key()]; ok {
+				if !yield(val, nil) {
+					return
+				}
+				continue
+			}
+
+			ctor := reg.Ctor()
+			ins, err := ctor()
+			if err != nil {
+				if !yield(nil, err) {
+					return
+				}
+				continue
+			}
+			if !yield(ins.Interface(), nil) {
+				return
+			}
+		}
+	}
 }

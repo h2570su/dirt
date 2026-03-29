@@ -24,6 +24,20 @@ func (reg *provideStructRegistration) Ctor() func() (reflect.Value, error) {
 	return reg.ctor
 }
 
+func (reg *provideStructRegistration) dependencyDepth() int {
+	maxDepth := 0
+	for _, dep := range reg.dependencies {
+		depDepth := 0
+		if dep.satisfiedBy != nil {
+			depDepth = dep.satisfiedBy.dependencyDepth()
+		}
+		if depDepth > maxDepth {
+			maxDepth = depDepth
+		}
+	}
+	return maxDepth + 1
+}
+
 type dependency struct {
 	key typeNameKey
 	// given the top level struct value, locate the dependency field reflect value (ptr in no reflect version)

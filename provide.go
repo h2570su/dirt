@@ -7,4 +7,5 @@ type registration interface {
 	Ctor() func() (reflect.Value, error)
 
 	resolvePossibleDeps(s *Scope) bool
+	dependencyDepth() int
 }

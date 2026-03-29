@@ -2,6 +2,7 @@ package dirt
 
 import (
 	"fmt"
+	"iter"
 	"reflect"
 )
 
@@ -55,4 +56,51 @@ func InvokeIndividual[T any](opts ...Option) (T, error) {
 			fmt.Errorf("dirt: instance type: `%T` does not match the requested type: `%s`", ins, key.Ty.String())
 	}
 	return typed, nil
+}
+
+// InvokeAs invokes the instance as the requested type T, return shortest dependency depth on if many.
+func InvokeAs[T any](opts ...Option) (T, error) {
+	opt := defaultProvideOptions()
+	for _, o := range opts {
+		opt = o(opt)
+	}
+
+	key := typeNameKey{Ty: reflect.TypeFor[T](), Name: opt.Name}
+	s := opt.Scope
+
+	for v, err := range s.invokeInstanceAsMany(key) {
+		typed, ok := v.(T)
+		if !ok {
+			return *new(T),
+				fmt.Errorf("dirt: instance type: `%T` does not match the requested type: `%s`, this should not happen", v, key.Ty.String())
+		}
+		return typed, err
+	}
+
+	return *new(T), fmt.Errorf("dirt: no instance found for type: `%s`", key.Ty.String())
+}
+
+// InvokeAs invokes the instance as the requested type T, return shortest dependency depth on if many.
+func InvokeAsMany[T any](opts ...Option) iter.Seq2[T, error] {
+	opt := defaultProvideOptions()
+	for _, o := range opts {
+		opt = o(opt)
+	}
+
+	key := typeNameKey{Ty: reflect.TypeFor[T](), Name: opt.Name}
+	s := opt.Scope
+
+	return func(yield func(T, error) bool) {
+		for v, err := range s.invokeInstanceAsMany(key) {
+			typed, ok := v.(T)
+			if !ok {
+				if !yield(*new(T), fmt.Errorf("dirt: instance type: `%T` does not match the requested type: `%s`, this should not happen", v, key.Ty.String())) {
+					return
+				}
+			}
+			if !yield(typed, err) {
+				return
+			}
+		}
+	}
 }
