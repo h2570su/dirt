@@ -1,16 +1,16 @@
 package dirt
 
-type Options struct {
-	Name  string
-	Scope *Scope
-}
+import "git.ttech.cc/astaroth/dirt/core"
 
-type Option func(Options) Options
+type (
+	Options = core.Options
+	Option  = core.Option
+)
 
-func defaultProvideOptions() Options { return Options{Scope: globalScope} }
+var defaultOptions = Options{Scope: globalScope}
 
 // Named specifies the name of the provided instance, which is used to distinguish different instances of the same type. By default, the name is empty string.
-func Named(name string) Option { return func(o Options) Options { o.Name = name; return o } }
+func Named(name string) Option { return core.Named(name) }
 
 // Scoped specifies the scope to R/W the registration and instance. By default, the global scope is used.
-func Scoped(scope *Scope) Option { return func(o Options) Options { o.Scope = scope; return o } }
+func Scoped(scope core.IScope) Option { return core.Scoped(scope) }

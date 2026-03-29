@@ -1,4 +1,4 @@
-package dirt
+package bystruct
 
 import (
 	"reflect"
