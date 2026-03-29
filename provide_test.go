@@ -96,14 +96,16 @@ func BenchmarkProvideStruct(b *testing.B) {
 
 	b.Run("Native Instantiation", func(b *testing.B) {
 		b.ResetTimer()
-		var sb *ServiceB
+		var sbp **ServiceB
 		for b.Loop() {
 			a, _ := Invoke[*ServiceA](Scoped(scope))
 
-			sb = &ServiceB{
+			sb := &ServiceB{
 				A: a,
 			}
+			_sbp := &sb
+			sbp = _sbp
 		}
-		b.Context().Value(sb)
+		b.Context().Value(sbp)
 	})
 }
