@@ -17,12 +17,12 @@ var globalScope = &Scope{}
 type Scope struct {
 	// TODO: thread-safety
 
-	registrations []*registration
+	registrations []registration
 	instances     map[typeNameKey]any
 }
 
-func (s *Scope) iterRegistration() iter.Seq[*registration] {
-	return func(yield func(*registration) bool) {
+func (s *Scope) iterRegistration() iter.Seq[registration] {
+	return func(yield func(registration) bool) {
 		for _, reg := range s.registrations {
 			if !yield(reg) {
 				return
@@ -34,19 +34,19 @@ func (s *Scope) iterRegistration() iter.Seq[*registration] {
 // writeRegistration writes the registration to all scopes
 func (s *Scope) writeRegistration(reg registration) {
 	for i := range s.registrations {
-		if s.registrations[i].key == reg.key {
-			s.registrations[i] = &reg
+		if s.registrations[i].Key() == reg.Key() {
+			s.registrations[i] = reg
 			return
 		}
 	}
 
-	s.registrations = append(s.registrations, &reg)
+	s.registrations = append(s.registrations, reg)
 }
 
 func (s *Scope) instantiate(key typeNameKey) (any, error) {
-	var reg *registration
+	var reg registration
 	for _, _reg := range s.registrations {
-		if _reg.key == key {
+		if _reg.Key() == key {
 			reg = _reg
 			break
 		}
@@ -55,10 +55,8 @@ func (s *Scope) instantiate(key typeNameKey) (any, error) {
 		return nil, fmt.Errorf("dirt: no provider found for type %s", key.Ty.String())
 	}
 
-	if reg.ctor == nil {
-		return nil, fmt.Errorf("dirt: type: %s has unsatisfied dependencies", key.Ty.String())
-	}
-	ins, err := reg.ctor()
+	ctor := reg.Ctor()
+	ins, err := ctor()
 	if err != nil {
 		return nil, err
 	}
@@ -90,9 +88,9 @@ func (s *Scope) invokeInstance(key typeNameKey) (any, error) {
 		return val, nil
 	}
 
-	var reg *registration
+	var reg registration
 	for _, _reg := range s.registrations {
-		if _reg.key == key {
+		if _reg.Key() == key {
 			reg = _reg
 			break
 		}
@@ -102,10 +100,8 @@ func (s *Scope) invokeInstance(key typeNameKey) (any, error) {
 		return nil, fmt.Errorf("dirt: no provider found for type %s", key.Ty.String())
 	}
 
-	if reg.ctor == nil {
-		return nil, fmt.Errorf("dirt: type: %s has unsatisfied dependencies", key.Ty.String())
-	}
-	ins, err := reg.ctor()
+	ctor := reg.Ctor()
+	ins, err := ctor()
 	if err != nil {
 		return nil, err
 	}
