@@ -17,7 +17,7 @@ type Scope struct {
 	// TODO: thread-safety
 
 	registrations []*registration
-	instances     map[TypeNameKey]reflect.Value
+	instances     map[TypeNameKey]any
 }
 
 func (s *Scope) iterRegistration() iter.Seq[*registration] {
@@ -42,7 +42,7 @@ func (s *Scope) writeRegistration(reg registration) {
 	s.registrations = append(s.registrations, &reg)
 }
 
-func (s *Scope) instantiate(key TypeNameKey) (reflect.Value, error) {
+func (s *Scope) instantiate(key TypeNameKey) (any, error) {
 	var reg *registration
 	for _, _reg := range s.registrations {
 		if _reg.key == key {
@@ -51,36 +51,40 @@ func (s *Scope) instantiate(key TypeNameKey) (reflect.Value, error) {
 		}
 	}
 	if reg == nil {
-		return reflect.Value{}, fmt.Errorf("dirt: no provider found for type %s", key.Ty.String())
+		return nil, fmt.Errorf("dirt: no provider found for type %s", key.Ty.String())
 	}
 
 	if reg.ctor == nil {
-		return reflect.Value{}, fmt.Errorf("dirt: type: %s has unsatisfied dependencies", key.Ty.String())
+		return nil, fmt.Errorf("dirt: type: %s has unsatisfied dependencies", key.Ty.String())
 	}
-	return reg.ctor()
+	ins, err := reg.ctor()
+	if err != nil {
+		return nil, err
+	}
+	return ins.Interface(), nil
 }
 
-func (s *Scope) getInstance(key TypeNameKey) (reflect.Value, bool) {
+func (s *Scope) getInstance(key TypeNameKey) (any, bool) {
 	if val, ok := s.instances[key]; ok {
 		return val, true
 	}
 
-	return reflect.Value{}, false
+	return nil, false
 }
 
-func (s *Scope) writeInstance(key TypeNameKey, val reflect.Value) {
+func (s *Scope) writeInstance(key TypeNameKey, val any) {
 	if _, ok := s.instances[key]; ok {
 		s.instances[key] = val
 		return
 	}
 
 	if s.instances == nil {
-		s.instances = make(map[TypeNameKey]reflect.Value)
+		s.instances = make(map[TypeNameKey]any)
 	}
 	s.instances[key] = val
 }
 
-func (s *Scope) invokeInstance(key TypeNameKey) (reflect.Value, error) {
+func (s *Scope) invokeInstance(key TypeNameKey) (any, error) {
 	if val, ok := s.instances[key]; ok {
 		return val, nil
 	}
@@ -94,19 +98,20 @@ func (s *Scope) invokeInstance(key TypeNameKey) (reflect.Value, error) {
 	}
 
 	if reg == nil {
-		return reflect.Value{}, fmt.Errorf("dirt: no provider found for type %s", key.Ty.String())
+		return nil, fmt.Errorf("dirt: no provider found for type %s", key.Ty.String())
 	}
 
 	if reg.ctor == nil {
-		return reflect.Value{}, fmt.Errorf("dirt: type: %s has unsatisfied dependencies", key.Ty.String())
+		return nil, fmt.Errorf("dirt: type: %s has unsatisfied dependencies", key.Ty.String())
 	}
 	ins, err := reg.ctor()
 	if err != nil {
-		return reflect.Value{}, err
+		return nil, err
 	}
 	if s.instances == nil {
-		s.instances = make(map[TypeNameKey]reflect.Value)
+		s.instances = make(map[TypeNameKey]any)
 	}
-	s.instances[key] = ins
-	return ins, nil
+	anyIns := ins.Interface()
+	s.instances[key] = anyIns
+	return anyIns, nil
 }

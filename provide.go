@@ -71,7 +71,7 @@ func Invoke[T any](opts ...Option) (T, error) {
 		ins = _ins
 	}
 
-	typed, ok := ins.Interface().(T)
+	typed, ok := ins.(T)
 	if !ok {
 		panic("dirt: instance type does not match the requested type")
 	}
@@ -178,14 +178,14 @@ func (reg *registration) buildCtor(s *Scope) {
 
 			// Check if the dependency instance is already created
 			if ins, ok := s.getInstance(dep.key); ok {
-				dep.locateFn(instance).Set(ins)
+				dep.locateFn(instance).Set(reflect.ValueOf(ins))
 				continue
 			}
 
 			// If not, invoke the dependency
 			ins, err := s.invokeInstance(dep.key)
 			if err == nil {
-				dep.locateFn(instance).Set(ins)
+				dep.locateFn(instance).Set(reflect.ValueOf(ins))
 			} else if !dep.optional { // If the dependency is not optional, return error
 				return reflect.Value{}, err
 			}
