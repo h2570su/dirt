@@ -24,8 +24,11 @@ type dependency struct {
 	satisfiedBy *registration
 }
 
-func ProvideStruct[T IInjectable](opt Options) {
-	opt = opt.amendDefault()
+func ProvideStruct[T IInjectable](opts ...Option) {
+	opt := defaultProvideOptions()
+	for _, o := range opts {
+		opt = o(opt)
+	}
 
 	rty := reflect.TypeFor[T]()
 
@@ -50,8 +53,11 @@ func ProvideStruct[T IInjectable](opt Options) {
 	}
 }
 
-func Invoke[T any](opt Options) (T, error) {
-	opt = opt.amendDefault()
+func Invoke[T any](opts ...Option) (T, error) {
+	opt := defaultProvideOptions()
+	for _, o := range opts {
+		opt = o(opt)
+	}
 
 	key := TypeNameKey{Ty: reflect.TypeFor[T](), Name: opt.Name}
 	s := opt.Scope

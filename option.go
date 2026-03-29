@@ -5,16 +5,9 @@ type Options struct {
 	Scope *Scope
 }
 
-func DefaultProvideOptions() Options { return Options{Scope: globalScope} }
-func Named(name string) Options      { return DefaultProvideOptions().Named(name) }
-func Scoped(scope *Scope) Options    { return DefaultProvideOptions().Scoped(scope) }
+type Option func(Options) Options
 
-func (o Options) amendDefault() Options {
-	if o.Scope == nil {
-		o.Scope = globalScope
-	}
-	return o
-}
+func defaultProvideOptions() Options { return Options{Scope: globalScope} }
 
-func (o Options) Named(name string) Options   { o.Name = name; return o }
-func (o Options) Scoped(scope *Scope) Options { o.Scope = scope; return o }
+func Named(name string) Option   { return func(o Options) Options { o.Name = name; return o } }
+func Scoped(scope *Scope) Option { return func(o Options) Options { o.Scope = scope; return o } }

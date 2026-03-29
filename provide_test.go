@@ -128,8 +128,9 @@ func BenchmarkProvideStruct(b *testing.B) {
 
 	b.Run("Invoke", func(b *testing.B) {
 		b.ResetTimer()
+		opts := []Option{Scoped(scope)}
 		for b.Loop() {
-			_, err := Invoke[*ServiceB](Scoped(scope))
+			_, err := Invoke[*ServiceB](opts...)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -149,8 +150,9 @@ func BenchmarkProvideStruct(b *testing.B) {
 	b.Run("Native Instantiation", func(b *testing.B) {
 		b.ResetTimer()
 		var sbp **ServiceB
+		opts := []Option{Scoped(scope)}
 		for b.Loop() {
-			a, _ := Invoke[*ServiceA](Scoped(scope))
+			a, _ := Invoke[*ServiceA](opts...)
 
 			sb := &ServiceB{
 				A: a,
