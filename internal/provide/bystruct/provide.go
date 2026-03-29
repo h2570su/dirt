@@ -51,6 +51,14 @@ func (reg *registration) IsReady() bool {
 	return true
 }
 
+func (reg *registration) DirectDeps() []core.TypeNameKey {
+	deps := make([]core.TypeNameKey, len(reg.dependencies))
+	for i, dep := range reg.dependencies {
+		deps[i] = dep.key
+	}
+	return deps
+}
+
 type dependency struct {
 	key core.TypeNameKey
 	// given the top level struct value, locate the dependency field reflect value (ptr in no reflect version)

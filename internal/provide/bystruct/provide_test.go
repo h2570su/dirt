@@ -2,6 +2,7 @@ package bystruct_test
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"sync"
@@ -457,5 +458,70 @@ func TestProvideStructOptional(t *testing.T) {
 		if s.Slave != nil {
 			t.Fatal("Slave should not be injected due to hook error, but should not cause overall failure")
 		}
+	})
+}
+
+type (
+	ServiceLoopABAa struct {
+		bystruct.Injectable
+
+		Dep *ServiceLoopABAb `dirt:""`
+	}
+	ServiceLoopABAb struct {
+		bystruct.Injectable
+
+		Dep *ServiceLoopABAa `dirt:""`
+	}
+
+	ServiceLoopABCAa struct {
+		bystruct.Injectable
+
+		Dep *ServiceLoopABCAb `dirt:""`
+	}
+	ServiceLoopABCAb struct {
+		bystruct.Injectable
+
+		Dep *ServiceLoopABCAc `dirt:""`
+	}
+	ServiceLoopABCAc struct {
+		bystruct.Injectable
+
+		Dep *ServiceLoopABCAa `dirt:""`
+	}
+)
+
+func TestProvideStructLoop(t *testing.T) {
+	validate := func() {
+		if r := recover(); r != nil {
+			if !strings.Contains(fmt.Sprint(r), "circular dependency detected") {
+				t.Fatalf("unexpected panic message: %s", fmt.Sprint(r))
+			}
+		}
+	}
+	t.Run("loop A->B->A", func(t *testing.T) {
+		defer validate()
+		scope := &simple.Scope{}
+		bystruct.ProvideStruct[*ServiceLoopABAa](opt(core.Scoped(scope)))
+		bystruct.ProvideStruct[*ServiceLoopABAb](opt(core.Scoped(scope)))
+	})
+	t.Run("loop A->B,individual", func(t *testing.T) {
+		defer validate()
+		scope := &simple.Scope{}
+		bystruct.ProvideStruct[*ServiceLoopABAa](opt(core.Scoped(scope)))
+		bystruct.ProvideStruct[*ServiceLoopABAa](opt(core.Scoped(scope)))
+	})
+	t.Run("loop A->B->C->A", func(t *testing.T) {
+		defer validate()
+		scope := &simple.Scope{}
+		bystruct.ProvideStruct[*ServiceLoopABCAa](opt(core.Scoped(scope)))
+		bystruct.ProvideStruct[*ServiceLoopABCAb](opt(core.Scoped(scope)))
+		bystruct.ProvideStruct[*ServiceLoopABCAc](opt(core.Scoped(scope)))
+	})
+	t.Run("loop A->B->C->A,individual", func(t *testing.T) {
+		defer validate()
+		scope := &simple.Scope{}
+		bystruct.ProvideStruct[*ServiceLoopABCAa](opt(core.Scoped(scope)))
+		bystruct.ProvideStruct[*ServiceLoopABCAb](opt(core.Scoped(scope)))
+		bystruct.ProvideStruct[*ServiceLoopABCAa](opt(core.Scoped(scope)))
 	})
 }

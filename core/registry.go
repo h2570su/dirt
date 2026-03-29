@@ -27,4 +27,6 @@ type Registration interface {
 	IsReady() bool
 	// ResolveDependencies resolves the dependencies of the registration with the registrations in the registry, which should be called after writing a new registration into the registry.
 	ResolveDependencies(s IRegistry)
+	// DirectDeps returns the direct dependencies of the registration, which is used for cycle detection.
+	DirectDeps() []TypeNameKey
 }
