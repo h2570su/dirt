@@ -1,6 +1,9 @@
 package dirt
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 func Invoke[T any](opts ...Option) (T, error) {
 	opt := defaultProvideOptions()
@@ -22,7 +25,8 @@ func Invoke[T any](opts ...Option) (T, error) {
 
 	typed, ok := ins.(T)
 	if !ok {
-		panic("dirt: instance type does not match the requested type")
+		return *new(T),
+			fmt.Errorf("dirt: instance type: `%T` does not match the requested type: `%s`", ins, key.Ty.String())
 	}
 	return typed, nil
 }
