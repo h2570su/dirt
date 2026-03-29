@@ -1,0 +1,26 @@
+# Ignore the build directory.
+*.exe
+__debug_bin
+
+# Ignore the test related files.
+*.test
+*.out
+*.pprof
+*.prof
+*.trace
+*.cover
+
+# Ignore the vendor directory.
+vendor
+
+# Ignore log files.
+log
+logs
+tmp/*
+
+# Ignore config file for local development.
+*.yaml
+!config.example.yaml
+
+# Ignore IDE/editor specific files.
+.vscode/

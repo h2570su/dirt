@@ -1,0 +1,125 @@
+# Refer to golangci-lint's example config file for more options and information:
+# https://github.com/golangci/golangci-lint/blob/master/.golangci.reference.yml
+
+version: "2"
+
+run:
+  timeout: 5m
+  allow-parallel-runners: true
+  modules-download-mode: readonly
+  # tests: false
+  enable-build-vcs: true
+
+output:
+  # Sort results by: filepath, line and column.
+  sort-results: true
+  sort-order:
+    - severity
+    - file
+
+linters:
+  default: standard # errcheck, govet, ineffassign, staticcheck, unused
+  enable:
+    # * Prevent typo linters
+    - asciicheck # Check for non-ASCII characters
+    # - misspell # Consider to use cSpell extension in local IDE instead to prevent fat rule syncing
+    # - dupword # Check for duplicated words, consider not to use due to string content may have duplicated words but a programmatically syntax
+
+    # * Prevent potentially buggy code patterns linters
+    - copyloopvar # Check unnecessary copying of loop variables in range loops after Go 1.22.
+    - durationcheck # Check for time.Duration not to mul by unit more than once.
+    - gocheckcompilerdirectives # Check for compiler directives (//go:xxx) to be well formed and correctly placed.
+    - errorlint # No err == ErrFoo
+    - iotamixing # Not to mix iota with other constants in the same const block.
+    - exhaustive # Force to handle all cases in switch/map
+    - predeclared # Not to shadow standard predeclared identifiers like new, max, make, etc.
+    - reassign # Not to reassign global variables in other package.
+    - wastedassign # Check for redundant assignments to the same variable
+    # - exhaustruct # Force to initialize all fields in struct literal
+
+    # * Beautify code linters
+    - embeddedstructfieldcheck # Group embedded struct fields together, split from named fields.
+    - goprintffuncname # Checks that printf-like functions are named with f at the end.
+    - tagalign # Struct field tags should be aligned in vertical
+    - unconvert # Check for redundant type conversions
+    - ineffassign # Check for ineffectual assignments, e.g. x = x + 1, but not to use in loop with preallocated slice, which is a common pattern and should be allowed.
+
+    # * Maintainability/consistency linters
+    - goconst # Find repeated strings that could be replaced by a constant.
+    - nolintlint # nolint should hold a reason
+    - gocognit # this or cyclop, but not both
+    - gocritic # Considering. annoying style checks
+
+    # * Performance linters
+    - makezero # Slice should preallocate capacity before appending in loop
+    - mirror # []byte/string alternatives methods
+    - perfsprint # Check for fmt.Sprintf in performance-sensitive code
+
+    # * Convention linters
+    - bodyclose # Check whether http.Response.Body is closed.
+    - sloglint # Force to use slog.Attr
+
+    # * Testing linters
+    - testableexamples # ExampleXXX() functions should hold a comment with "Output:" prefix and expected output
+    - usetesting # Use testing.T methods instead of global one
+
+    # * Code pattern linters
+    - iface # Absolutely needed. Prevent interface pollution
+    - interfacebloat # Also needed. Prevent bloated interfaces.
+    - ireturn # And this one. Prevent returning interface instead of concrete type.
+    - nonamedreturns # Half-Half, but in most cases shadowing err is ugly. Bans foo()(val string)
+    - wrapcheck # Error should be wrapped instead of directly returned, prevent Err: "record not found" ???
+    - containedctx # context.Context should be passed in method not stored in struct
+    - errcheck # Check for unchecked errors
+
+    # * Security linters
+    - gosec # Check for security issues
+
+    # * Modernize linters,
+    - modernize # Check for code that can be simplified by using new language features, e.g. int range.
+    - exptostd # Check for experimental APIs that should be replaced with standard ones, e.g. io.NopCloser instead of ioutil.NopCloser.
+
+    # * Swiss knives
+    - staticcheck
+    - govet
+  settings:
+    ireturn:
+      allow:
+        - anon
+        - error
+        - empty
+        - stdlib
+        - generic
+    errcheck:
+      check-type-assertions: true
+    staticcheck:
+      checks:
+        - all
+        # * Excludes
+        - -ST1000 # Incorrect or missing package comment
+        - -ST1003 # Poorly chosen identifier
+        - -ST1016 # Use consistent method receiver names
+        - -ST1020 # The documentation of an exported function should start with the function's name
+        - -ST1021 # The documentation of an exported type should start with type's name
+        - -ST1022 # The documentation of an exported variable or constant should start with variable's name
+        - -QF1008 # Remove redundant embedded struct selector. e.g. A embed B, but A.B.C is used instead of A.C. In some cases, use selector is more secure.
+    exhaustive:
+      check:
+        - switch
+        - map
+      default-signifies-exhaustive: true
+      package-scope-only: false
+      default-case-required: true
+    exhaustruct:
+      allow-empty-declarations: false
+      allow-empty: false
+      allow-empty-returns: true
+
+formatters:
+  enable:
+    - gofumpt
+
+issues:
+  fix: false # Please use golangci-lint run --fix, not to automatically fix, to prevent unexpected changes.
+  max-issues-per-linter: 0 # 0 means no limit
+  max-same-issues: 0 # 0 means no limit
