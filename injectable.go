@@ -4,7 +4,7 @@ import (
 	"git.ttech.cc/astaroth/dirt/internal"
 )
 
-type IInjectable interface {
+type iInjectable interface {
 	dirtInjectable()
 }
 
@@ -12,7 +12,7 @@ type Injectable struct{ _ internal.Sentinel }
 
 func (Injectable) dirtInjectable() {}
 
-type ISubclass interface {
+type iSubclass interface {
 	dirtSubclass()
 }
 

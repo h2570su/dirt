@@ -24,7 +24,7 @@ type dependency struct {
 	satisfiedBy *registration
 }
 
-func ProvideStruct[T IInjectable](opts ...Option) {
+func ProvideStruct[T iInjectable](opts ...Option) {
 	opt := defaultProvideOptions()
 	for _, o := range opts {
 		opt = o(opt)
@@ -80,7 +80,7 @@ func (reg *registration) markDeps(rty reflect.Type, accessFromRoot func(reflect.
 		}
 
 		// Handle subclass dependencies
-		if sf.Type.Implements(reflect.TypeFor[ISubclass]()) {
+		if sf.Type.Implements(reflect.TypeFor[iSubclass]()) {
 			// Handle subclass dependencies
 			reg.markDeps(sf.Type, locateFn)
 			continue
