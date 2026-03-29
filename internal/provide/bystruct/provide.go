@@ -11,19 +11,13 @@ import (
 type registration struct {
 	key core.TypeNameKey
 	// the constructor of the target type, only appears when all dependencies are satisfied
-	ctor func() (reflect.Value, error)
+	ctor func(s core.IScope) (reflect.Value, error)
 
 	dependencies []*dependency
 	nestCtors    []func(root reflect.Value)
 }
 
 func (reg *registration) Key() core.TypeNameKey { return reg.key }
-func (reg *registration) Ctor() (reflect.Value, error) {
-	if reg.ctor == nil {
-		return reflect.Value{}, fmt.Errorf("dirt: type: %s has unsatisfied dependencies", reg.key.Type.String())
-	}
-	return reg.ctor()
-}
 
 func (reg *registration) DependencyDepth() int {
 	maxDepth := 0
@@ -39,7 +33,23 @@ func (reg *registration) DependencyDepth() int {
 	return maxDepth + 1
 }
 
-func (reg *registration) IsReady() bool { return reg.ctor != nil }
+func (reg *registration) IsReady() bool {
+	if reg.ctor == nil {
+		return false
+	}
+	for _, dep := range reg.dependencies {
+		if dep.optional {
+			continue
+		}
+		if dep.satisfiedBy == nil {
+			return false
+		}
+		if !dep.satisfiedBy.IsReady() {
+			return false
+		}
+	}
+	return true
+}
 
 type dependency struct {
 	key core.TypeNameKey
@@ -68,15 +78,6 @@ func ProvideStruct[T IInjectable](opt core.Options) {
 
 	s := opt.Scope
 	s.WriteRegistration(reg)
-	for modified := true; modified; {
-		modified = false
-		for reg := range s.IterRegistration() {
-			modified = reg.ResolvePossibleDeps(s) || modified
-			if modified {
-				break
-			}
-		}
-	}
 }
 
 // markDeps recursively marks the dependencies of struct, including nested/indirect access
@@ -132,22 +133,15 @@ func (reg *registration) markDeps(rty reflect.Type, accessFromRoot func(reflect.
 }
 
 // Return modified
-func (reg *registration) ResolvePossibleDeps(s core.IScope) bool {
-	modified := false
-
-	if reg.ctor != nil {
-		return modified
-	}
-
+func (reg *registration) ResolveDependencies(s core.IRegistry) {
 	for _, dep := range reg.dependencies {
 		if dep.satisfiedBy != nil {
 			continue
 		}
 
 		for possible := range s.IterRegistration() {
-			if possible.Key() == dep.key && possible.IsReady() {
+			if possible.Key() == dep.key {
 				dep.satisfiedBy = possible
-				modified = true
 				break
 			}
 		}
@@ -162,15 +156,21 @@ func (reg *registration) ResolvePossibleDeps(s core.IScope) bool {
 	}
 
 	if !allDepsSatisfied {
-		return modified
+		return
 	}
-	reg.buildCtor(s)
+	reg.buildCtor()
 	reg.buildCtorWithHook()
-	return true
 }
 
-func (reg *registration) buildCtor(s core.IScope) {
-	reg.ctor = func() (reflect.Value, error) {
+func (reg *registration) Ctor(s core.IScope) (reflect.Value, error) {
+	if reg.ctor == nil {
+		return reflect.Value{}, fmt.Errorf("dirt: type: %s has unsatisfied dependencies", reg.key.Type.String())
+	}
+	return reg.ctor(s)
+}
+
+func (reg *registration) buildCtor() {
+	reg.ctor = func(s core.IScope) (reflect.Value, error) {
 		var instance reflect.Value
 		if reg.key.Type.Kind() == reflect.Pointer {
 			instance = reflect.New(reg.key.Type.Elem())
@@ -184,7 +184,7 @@ func (reg *registration) buildCtor(s core.IScope) {
 		for _, dep := range reg.dependencies {
 			// If the dependency is individual, we need to invoke it directly without checking the instance repo
 			if dep.individual {
-				ins, err := dep.satisfiedBy.Ctor()
+				ins, err := dep.satisfiedBy.Ctor(s)
 				if err == nil {
 					dep.locateFn(instance).Set(ins)
 				} else if !dep.optional { // If the dependency is not optional, return error
@@ -220,10 +220,9 @@ func (reg *registration) buildCtor(s core.IScope) {
 
 func (reg *registration) buildCtorWithHook() {
 	t := reg.key.Type
-	pt := reflect.PointerTo(t)
 	current := reg.ctor
 
-	current = hook.CheckAppendPostInjectHookCtor(t, pt, current)
+	current = hook.CheckAppendPostInjectHookCtor(t, current)
 
 	reg.ctor = current
 }

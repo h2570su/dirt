@@ -1,7 +1,6 @@
 package simple
 
 import (
-	"fmt"
 	"iter"
 	"sync"
 
@@ -27,6 +26,14 @@ func (s *Registry) IterRegistration() iter.Seq[core.Registration] {
 }
 
 func (s *Registry) WriteRegistration(reg core.Registration) {
+	defer func() {
+		for reg := range s.IterRegistration() {
+			if reg.IsReady() {
+				continue
+			}
+			reg.ResolveDependencies(s)
+		}
+	}()
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -38,23 +45,4 @@ func (s *Registry) WriteRegistration(reg core.Registration) {
 	}
 
 	s.registrations = append(s.registrations, reg)
-}
-
-func (s *Registry) Instantiate(key core.TypeNameKey) (any, error) {
-	var reg core.Registration
-	for _reg := range s.IterRegistration() {
-		if _reg.Key() == key {
-			reg = _reg
-			break
-		}
-	}
-	if reg == nil {
-		return nil, fmt.Errorf("dirt: no provider found for type %s", key.Type.String())
-	}
-
-	ins, err := reg.Ctor()
-	if err != nil {
-		return nil, fmt.Errorf("dirt: failed to instantiate type: `%s`, error: %w", key.Type.String(), err)
-	}
-	return ins.Interface(), nil
 }

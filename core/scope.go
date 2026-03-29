@@ -7,6 +7,9 @@ type IScope interface {
 	IRegistry
 	IContainer
 
+	// Instantiate creates an instance of the provided named type by its registration in the scope
+	Instantiate(key TypeNameKey) (any, error)
+
 	// InvokeInstance creates/gets the instance of the provided named type by its registration in the scope.
 	InvokeInstance(key TypeNameKey) (any, error)
 	// InvokeInstanceAsMany creates/gets the instances as required by the provided named interface type

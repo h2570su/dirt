@@ -3,6 +3,8 @@ package hook
 import (
 	"fmt"
 	"reflect"
+
+	"git.ttech.cc/astaroth/dirt/core"
 )
 
 // IPostInjectHook is an interface that can be implemented by types that want to do post-injection initialization.
@@ -12,7 +14,8 @@ type IPostInjectHook interface {
 
 var rtyPostInjectHook = reflect.TypeFor[IPostInjectHook]()
 
-func CheckAppendPostInjectHookCtor(t reflect.Type, pt reflect.Type, ctor func() (reflect.Value, error)) func() (reflect.Value, error) {
+func CheckAppendPostInjectHookCtor(t reflect.Type, ctor core.Ctor) core.Ctor {
+	pt := reflect.PointerTo(t)
 	var transform func(reflect.Value) reflect.Value
 
 	if t.Kind() != reflect.Pointer && pt.Implements(rtyPostInjectHook) {
@@ -28,8 +31,8 @@ func CheckAppendPostInjectHookCtor(t reflect.Type, pt reflect.Type, ctor func() 
 		return ctor
 	}
 	// Otherwise, append the hook call
-	return func() (reflect.Value, error) {
-		instance, err := ctor()
+	return func(s core.IScope) (reflect.Value, error) {
+		instance, err := ctor(s)
 		if err != nil {
 			return reflect.Value{}, err
 		}

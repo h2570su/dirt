@@ -15,6 +15,25 @@ type Scope struct {
 	// TODO: thread-safety
 }
 
+func (s *Scope) Instantiate(key core.TypeNameKey) (any, error) {
+	var reg core.Registration
+	for _reg := range s.IterRegistration() {
+		if _reg.Key() == key {
+			reg = _reg
+			break
+		}
+	}
+	if reg == nil {
+		return nil, fmt.Errorf("dirt: no provider found for type %s", key.Type.String())
+	}
+
+	ins, err := reg.Ctor(s)
+	if err != nil {
+		return nil, fmt.Errorf("dirt: failed to instantiate type: `%s`, error: %w", key.Type.String(), err)
+	}
+	return ins.Interface(), nil
+}
+
 func (s *Scope) InvokeInstance(key core.TypeNameKey) (any, error) {
 	if val, ok := s.GetInstance(key); ok {
 		return val, nil
@@ -32,7 +51,7 @@ func (s *Scope) InvokeInstance(key core.TypeNameKey) (any, error) {
 		return nil, fmt.Errorf("dirt: no provider found for type %s", key.Type.String())
 	}
 
-	ins, err := reg.Ctor()
+	ins, err := reg.Ctor(s)
 	if err != nil {
 		return nil, fmt.Errorf("dirt: failed to instantiate type: `%s`, error: %w", key.Type.String(), err)
 	}
@@ -72,7 +91,7 @@ func (s *Scope) InvokeInstanceAsMany(key core.TypeNameKey) iter.Seq2[any, error]
 				continue
 			}
 
-			ins, err := reg.Ctor()
+			ins, err := reg.Ctor(s)
 			if err != nil {
 				if !yield(nil, err) {
 					return
