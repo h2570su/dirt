@@ -71,24 +71,26 @@ func Invoke[T any](scopes ...*Scope) (T, error) {
 }
 
 func (reg *registration) markDeps(structRty reflect.Type, rootToStructFn func(reflect.Value) reflect.Value) {
+	if structRty.Kind() == reflect.Pointer {
+		elemTy := structRty.Elem()
+		reg.markDeps(elemTy, func(v reflect.Value) reflect.Value {
+			return rootToStructFn(v).Elem()
+		})
+		return
+	}
 	for i := 0; i < structRty.NumField(); i++ {
 		sf := structRty.Field(i)
 		// Skip Injectable indicator
 		if sf.Type == reflect.TypeFor[Injectable]() {
 			continue
 		}
+		locateFn := func(sv reflect.Value) reflect.Value {
+			return rootToStructFn(sv).Field(i)
+		}
 
 		// Handle subclass dependencies
 		if sf.Type.Implements(reflect.TypeFor[ISubclass]()) {
 			// Handle subclass dependencies
-			locateFn := func(sv reflect.Value) reflect.Value {
-				return rootToStructFn(sv).Field(i)
-			}
-			for t := sf.Type; t.Kind() == reflect.Pointer; t = t.Elem() {
-				locateFn = func(sv reflect.Value) reflect.Value {
-					return locateFn(sv).Elem()
-				}
-			}
 			reg.markDeps(sf.Type, locateFn)
 			continue
 		}
@@ -103,10 +105,8 @@ func (reg *registration) markDeps(structRty reflect.Type, rootToStructFn func(re
 		depRty := sf.Type
 
 		reg.dependencies = append(reg.dependencies, &dependency{
-			key: TypeNameKey{Ty: depRty, Name: tag.Name},
-			locateFn: func(sv reflect.Value) reflect.Value {
-				return sv.Field(i)
-			},
+			key:      TypeNameKey{Ty: depRty, Name: tag.Name},
+			locateFn: locateFn,
 		})
 	}
 }
