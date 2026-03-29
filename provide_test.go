@@ -1,6 +1,7 @@
 package dirt
 
 import (
+	"errors"
 	"testing"
 )
 
@@ -172,5 +173,67 @@ func TestProvideStructNamed(t *testing.T) {
 		ProvideStruct[*ServiceA](Scoped(scope), Named("ab"))
 
 		validate(t, scope)
+	})
+}
+
+const HookTestMixinCalledValue = "hooked"
+
+type HookTestMixin string
+
+func (h *HookTestMixin) PostInject() error { *h = HookTestMixinCalledValue; return nil }
+
+type HookTestErrorMixin string
+
+func (h *HookTestErrorMixin) PostInject() error { return errors.New("hook error") }
+
+func TestProvideStructWithHook(t *testing.T) {
+	type ServiceA struct {
+		Injectable
+
+		HookTestMixin
+	}
+
+	t.Run("*T hook", func(t *testing.T) {
+		var _ IPostInjectHook = (*ServiceA)(nil) // Ensure *ServiceA implements IPostInjectHook
+		scope := &Scope{}
+		ProvideStruct[*ServiceA](Scoped(scope))
+
+		a, err := Invoke[*ServiceA](Scoped(scope))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if a.HookTestMixin != HookTestMixinCalledValue {
+			t.Fatalf("hook not called, got: %s", a.HookTestMixin)
+		}
+	})
+	t.Run("T hook", func(t *testing.T) {
+		scope := &Scope{}
+		ProvideStruct[ServiceA](Scoped(scope))
+
+		a, err := Invoke[ServiceA](Scoped(scope))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if a.HookTestMixin != HookTestMixinCalledValue {
+			t.Fatalf("hook not called, got: %s", a.HookTestMixin)
+		}
+	})
+
+	t.Run("hook error", func(t *testing.T) {
+		type ServiceB struct {
+			Injectable
+
+			HookTestErrorMixin
+		}
+		scope := &Scope{}
+		ProvideStruct[*ServiceB](Scoped(scope))
+
+		_, err := Invoke[*ServiceB](Scoped(scope))
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+		if err.Error() != "PostInject hook error: hook error" {
+			t.Fatalf("unexpected error message: %s", err.Error())
+		}
 	})
 }

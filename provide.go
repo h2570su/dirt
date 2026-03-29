@@ -138,6 +138,7 @@ func (reg *registration) resolvePossibleDeps(s *Scope) bool {
 		return modified
 	}
 	reg.buildCtor(s)
+	reg.buildCtorWithHook(s)
 	return true
 }
 
@@ -181,4 +182,14 @@ func (reg *registration) buildCtor(s *Scope) {
 		}
 		return instance, nil
 	}
+}
+
+func (reg *registration) buildCtorWithHook(_ *Scope) {
+	t := reg.key.Ty
+	pt := reflect.PointerTo(t)
+	current := reg.ctor
+
+	current = checkAppendPostInjectHookCtor(t, pt, current)
+
+	reg.ctor = current
 }
