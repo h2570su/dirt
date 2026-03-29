@@ -110,3 +110,67 @@ func TestProvideStructNested(t *testing.T) {
 		}
 	})
 }
+
+func TestProvideStructNamed(t *testing.T) {
+	type ServiceA struct {
+		Injectable
+
+		Config string
+	}
+	type ServiceB struct {
+		Injectable
+
+		AA *ServiceA `dirt:"name:aa"`
+		AB *ServiceA `dirt:"name:ab"`
+	}
+
+	validate := func(t *testing.T, scope *Scope) {
+		aa, err := Invoke[*ServiceA](Scoped(scope), Named("aa"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		ab, err := Invoke[*ServiceA](Scoped(scope), Named("ab"))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if aa == ab {
+			t.Fatal("same instance injected for different names")
+		}
+
+		b, err := Invoke[*ServiceB](Scoped(scope))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if b.AA == nil || b.AB == nil {
+			t.Fatal("dependency not injected")
+		}
+		if aa != b.AA {
+			t.Fatal("different instance injected")
+		}
+		if ab != b.AB {
+			t.Fatal("different instance injected")
+		}
+		if aa == b.AB || ab == b.AA {
+			t.Fatal("same instance injected for different names")
+		}
+	}
+
+	t.Run("A,B", func(t *testing.T) {
+		scope := &Scope{}
+		ProvideStruct[*ServiceA](Scoped(scope), Named("aa"))
+		ProvideStruct[*ServiceA](Scoped(scope), Named("ab"))
+		ProvideStruct[*ServiceB](Scoped(scope))
+
+		validate(t, scope)
+	})
+
+	t.Run("B,A", func(t *testing.T) {
+		scope := &Scope{}
+		ProvideStruct[*ServiceB](Scoped(scope))
+		ProvideStruct[*ServiceA](Scoped(scope), Named("aa"))
+		ProvideStruct[*ServiceA](Scoped(scope), Named("ab"))
+
+		validate(t, scope)
+	})
+}
