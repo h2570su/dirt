@@ -57,9 +57,11 @@ func ProvideStruct[T IInjectable](opts ...Option) {
 func (reg *registration) markDeps(rty reflect.Type, accessFromRoot func(reflect.Value) reflect.Value) {
 	if rty.Kind() == reflect.Pointer {
 		elemTy := rty.Elem()
-		reg.nestCtors = append(reg.nestCtors, func(root reflect.Value) {
-			accessFromRoot(root).Set(reflect.New(elemTy))
-		})
+		if rty != reg.key.Ty { // Skip the *root type itself, since it's already handled in the ctor
+			reg.nestCtors = append(reg.nestCtors, func(root reflect.Value) {
+				accessFromRoot(root).Set(reflect.New(elemTy))
+			})
+		}
 		reg.markDeps(elemTy, func(v reflect.Value) reflect.Value { return accessFromRoot(v).Elem() })
 		return
 	}
@@ -141,7 +143,12 @@ func (reg *registration) resolvePossibleDeps(s *Scope) bool {
 
 func (reg *registration) buildCtor(s *Scope) {
 	reg.ctor = func() (reflect.Value, error) {
-		instance := reflect.New(reg.key.Ty).Elem()
+		var instance reflect.Value
+		if reg.key.Ty.Kind() == reflect.Pointer {
+			instance = reflect.New(reg.key.Ty.Elem())
+		} else {
+			instance = reflect.New(reg.key.Ty).Elem()
+		}
 		for _, nest := range reg.nestCtors {
 			nest(instance)
 		}
@@ -172,7 +179,6 @@ func (reg *registration) buildCtor(s *Scope) {
 				return reflect.Value{}, err
 			}
 		}
-
 		return instance, nil
 	}
 }
