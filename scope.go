@@ -6,18 +6,19 @@ import (
 	"reflect"
 )
 
-type TypeNameKey struct {
+type typeNameKey struct {
 	Ty   reflect.Type
 	Name string
 }
 
 var globalScope = &Scope{}
 
+// Scope represents a scope of the provided types/instances, which holds the registrations and instances.
 type Scope struct {
 	// TODO: thread-safety
 
 	registrations []*registration
-	instances     map[TypeNameKey]any
+	instances     map[typeNameKey]any
 }
 
 func (s *Scope) iterRegistration() iter.Seq[*registration] {
@@ -42,7 +43,7 @@ func (s *Scope) writeRegistration(reg registration) {
 	s.registrations = append(s.registrations, &reg)
 }
 
-func (s *Scope) instantiate(key TypeNameKey) (any, error) {
+func (s *Scope) instantiate(key typeNameKey) (any, error) {
 	var reg *registration
 	for _, _reg := range s.registrations {
 		if _reg.key == key {
@@ -64,7 +65,7 @@ func (s *Scope) instantiate(key TypeNameKey) (any, error) {
 	return ins.Interface(), nil
 }
 
-func (s *Scope) getInstance(key TypeNameKey) (any, bool) {
+func (s *Scope) getInstance(key typeNameKey) (any, bool) {
 	if val, ok := s.instances[key]; ok {
 		return val, true
 	}
@@ -72,19 +73,19 @@ func (s *Scope) getInstance(key TypeNameKey) (any, bool) {
 	return nil, false
 }
 
-func (s *Scope) writeInstance(key TypeNameKey, val any) {
+func (s *Scope) writeInstance(key typeNameKey, val any) {
 	if _, ok := s.instances[key]; ok {
 		s.instances[key] = val
 		return
 	}
 
 	if s.instances == nil {
-		s.instances = make(map[TypeNameKey]any)
+		s.instances = make(map[typeNameKey]any)
 	}
 	s.instances[key] = val
 }
 
-func (s *Scope) invokeInstance(key TypeNameKey) (any, error) {
+func (s *Scope) invokeInstance(key typeNameKey) (any, error) {
 	if val, ok := s.instances[key]; ok {
 		return val, nil
 	}
@@ -109,7 +110,7 @@ func (s *Scope) invokeInstance(key TypeNameKey) (any, error) {
 		return nil, err
 	}
 	if s.instances == nil {
-		s.instances = make(map[TypeNameKey]any)
+		s.instances = make(map[typeNameKey]any)
 	}
 	anyIns := ins.Interface()
 	s.instances[key] = anyIns

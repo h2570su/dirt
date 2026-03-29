@@ -5,7 +5,7 @@ import (
 )
 
 type registration struct {
-	key TypeNameKey
+	key typeNameKey
 	// the constructor of the target type, only appears when all dependencies are satisfied
 	ctor func() (reflect.Value, error)
 
@@ -14,7 +14,7 @@ type registration struct {
 }
 
 type dependency struct {
-	key TypeNameKey
+	key typeNameKey
 	// given the top level struct value, locate the dependency field reflect value (ptr in no reflect version)
 	locateFn func(reflect.Value) reflect.Value
 
@@ -24,6 +24,9 @@ type dependency struct {
 	satisfiedBy *registration
 }
 
+// ProvideStruct registers the struct type T to be provided by the container.
+//
+//	The dependencies of T determined by its fields and tags.
 func ProvideStruct[T iInjectable](opts ...Option) {
 	opt := defaultProvideOptions()
 	for _, o := range opts {
@@ -33,7 +36,7 @@ func ProvideStruct[T iInjectable](opts ...Option) {
 	rty := reflect.TypeFor[T]()
 
 	reg := registration{
-		key: TypeNameKey{Ty: rty, Name: opt.Name},
+		key: typeNameKey{Ty: rty, Name: opt.Name},
 	}
 
 	reg.markDeps(rty, func(v reflect.Value) reflect.Value {
@@ -96,7 +99,7 @@ func (reg *registration) markDeps(rty reflect.Type, accessFromRoot func(reflect.
 		depRty := sf.Type
 
 		reg.dependencies = append(reg.dependencies, &dependency{
-			key:      TypeNameKey{Ty: depRty, Name: tag.Name},
+			key:      typeNameKey{Ty: depRty, Name: tag.Name},
 			locateFn: locateFn,
 
 			individual: tag.Individual,

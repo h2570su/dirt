@@ -5,8 +5,17 @@ import (
 	"strings"
 )
 
+// Tag format: `dirt:"[name:instanceName,][optional,][individual]"`
+// each options separated by comma, order not required.
+// name:instanceName is used to distinguish different instances of the same type, which is useful when there are multiple providers for the same type. default "".
+// optional marks the dependency as optional, not to be injected if no provider is found/successfully instantiated.
+// individual marks the dependency as individual, always to be injected with a new instance, even if there is a existing instance.
+
 const (
-	TagDirt = "dirt"
+	tagDirt          = "dirt"
+	tagKeyName       = "name"
+	tagKeyOptional   = "optional"
+	tagKeyIndividual = "individual"
 )
 
 type tag struct {
@@ -18,7 +27,7 @@ type tag struct {
 }
 
 func parseTag(sf reflect.StructField) tag {
-	raw, ok := sf.Tag.Lookup(TagDirt)
+	raw, ok := sf.Tag.Lookup(tagDirt)
 	if !ok {
 		return tag{}
 	}
@@ -35,11 +44,11 @@ func parseTag(sf reflect.StructField) tag {
 			key, value = possibleKV[0], possibleKV[1]
 		}
 		switch key {
-		case "optional":
+		case tagKeyOptional:
 			parsed.Optional = true
-		case "individual":
+		case tagKeyIndividual:
 			parsed.Individual = true
-		case "name":
+		case tagKeyName:
 			parsed.Name = value
 		default:
 			continue
