@@ -13,7 +13,6 @@ type Injectable struct{ _ internal.Sentinel }
 func (Injectable) dirtInjectable() {}
 
 type ISubclass interface {
-	IInjectable
 	dirtSubclass()
 }
 

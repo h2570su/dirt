@@ -85,9 +85,13 @@ func (reg *registration) markDeps(rty reflect.Type, accessFromRoot func(reflect.
 	for i := range rty.NumField() {
 		sf := rty.Field(i)
 		// Skip Injectable indicator
-		if sf.Type == reflect.TypeFor[Injectable]() {
+		switch sf.Type {
+		case reflect.TypeFor[Injectable]():
+			continue
+		case reflect.TypeFor[Subclass]():
 			continue
 		}
+
 		locateFn := func(sv reflect.Value) reflect.Value {
 			return accessFromRoot(sv).Field(i)
 		}
