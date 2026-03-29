@@ -117,6 +117,7 @@ func (reg *registration) resolvePossibleDeps(s *Scope) bool {
 		if dep.satisfiedBy != nil {
 			continue
 		}
+
 		for possible := range s.iterRegistration() {
 			if possible.key == dep.key && possible.ctor != nil {
 				dep.satisfiedBy = possible
@@ -128,7 +129,7 @@ func (reg *registration) resolvePossibleDeps(s *Scope) bool {
 
 	allDepsSatisfied := true
 	for _, dep := range reg.dependencies {
-		if dep.satisfiedBy == nil {
+		if dep.satisfiedBy == nil && !dep.optional {
 			allDepsSatisfied = false
 			break
 		}

@@ -237,3 +237,110 @@ func TestProvideStructWithHook(t *testing.T) {
 		}
 	})
 }
+
+func TestProvideStructOptional(t *testing.T) {
+	type ServiceSuccess struct {
+		Injectable
+
+		HookTestMixin
+	}
+
+	type ServiceFail struct {
+		Injectable
+
+		HookTestErrorMixin
+	}
+
+	t.Run("optional", func(t *testing.T) {
+		type Service struct {
+			Injectable
+
+			Master *ServiceSuccess `dirt:""`
+			Slave  *ServiceFail    `dirt:"optional"`
+		}
+		scope := &Scope{}
+		ProvideStruct[*ServiceSuccess](Scoped(scope))
+		ProvideStruct[*ServiceFail](Scoped(scope))
+		ProvideStruct[*Service](Scoped(scope))
+
+		s, err := Invoke[*Service](Scoped(scope))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s.Master == nil {
+			t.Fatal("Master should be injected")
+		}
+		if s.Slave != nil {
+			t.Fatal("Slave should not be injected due to hook error, but should not cause overall failure")
+		}
+	})
+	t.Run("optional,reversed", func(t *testing.T) {
+		type Service struct {
+			Injectable
+
+			Slave  *ServiceFail    `dirt:"optional"`
+			Master *ServiceSuccess `dirt:""`
+		}
+		scope := &Scope{}
+		ProvideStruct[*ServiceSuccess](Scoped(scope))
+		ProvideStruct[*ServiceFail](Scoped(scope))
+		ProvideStruct[*Service](Scoped(scope))
+
+		s, err := Invoke[*Service](Scoped(scope))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s.Master == nil {
+			t.Fatal("Master should be injected")
+		}
+		if s.Slave != nil {
+			t.Fatal("Slave should not be injected due to hook error, but should not cause overall failure")
+		}
+	})
+	t.Run("optional,individual", func(t *testing.T) {
+		type Service struct {
+			Injectable
+
+			Master *ServiceSuccess `dirt:"individual"`
+			Slave  *ServiceFail    `dirt:"optional,individual"`
+		}
+		scope := &Scope{}
+		ProvideStruct[*ServiceSuccess](Scoped(scope))
+		ProvideStruct[*ServiceFail](Scoped(scope))
+		ProvideStruct[*Service](Scoped(scope))
+
+		s, err := Invoke[*Service](Scoped(scope))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s.Master == nil {
+			t.Fatal("Master should be injected")
+		}
+		if s.Slave != nil {
+			t.Fatal("Slave should not be injected due to hook error, but should not cause overall failure")
+		}
+	})
+	t.Run("optional,one-not-exist", func(t *testing.T) {
+		type ServiceNotExist struct{}
+		type Service struct {
+			Injectable
+
+			Master *ServiceSuccess  `dirt:""`
+			Slave  *ServiceNotExist `dirt:"optional"`
+		}
+		scope := &Scope{}
+		ProvideStruct[*ServiceSuccess](Scoped(scope))
+		ProvideStruct[*Service](Scoped(scope))
+
+		s, err := Invoke[*Service](Scoped(scope))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if s.Master == nil {
+			t.Fatal("Master should be injected")
+		}
+		if s.Slave != nil {
+			t.Fatal("Slave should not be injected due to hook error, but should not cause overall failure")
+		}
+	})
+}
