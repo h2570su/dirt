@@ -81,13 +81,30 @@ func BenchmarkInstantiate(b *testing.B) {
 
 		A *ServiceA `dirt:"individual"`
 	}
+	type ServiceBa struct {
+		dirt.Injectable
+
+		a *ServiceA `dirt:"individual"` //nolint:unused
+	}
+
 	scope := &dirt.Scope{}
 	bystruct.ProvideStruct[*ServiceA](opt(dirt.Scoped(scope)))
 	bystruct.ProvideStruct[*ServiceB](opt(dirt.Scoped(scope)))
+	bystruct.ProvideStruct[*ServiceBa](opt(dirt.Scoped(scope)))
 
 	b.Run("dirt", func(b *testing.B) {
 		b.ResetTimer()
 		key := core.TypeNameKey{Type: reflect.TypeFor[*ServiceB]()}
+		for b.Loop() {
+			_, err := scope.Instantiate(key)
+			if err != nil {
+				b.Fatal(err)
+			}
+		}
+	})
+	b.Run("dirt,unexported", func(b *testing.B) {
+		b.ResetTimer()
+		key := core.TypeNameKey{Type: reflect.TypeFor[*ServiceBa]()}
 		for b.Loop() {
 			_, err := scope.Instantiate(key)
 			if err != nil {
@@ -168,6 +185,34 @@ func TestProvideStruct(t *testing.T) {
 		bystruct.ProvideStruct[*ServiceAA](opt(core.Scoped(scope)))
 
 		validate(t, scope)
+	})
+}
+
+func TestProvideStructUnexported(t *testing.T) {
+	type ServiceA struct {
+		bystruct.Injectable
+
+		Config string
+	}
+	type ServiceB struct {
+		bystruct.Injectable
+
+		a *ServiceA `dirt:""`
+	}
+
+	t.Run("A,B", func(t *testing.T) {
+		scope := &simple.Scope{}
+		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope)))
+		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope)))
+
+		_b, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceB]()})
+		if err != nil {
+			t.Fatal(err)
+		}
+		b, _ := _b.(*ServiceB)
+		if b.a == nil {
+			t.Fatal("dependency not injected")
+		}
 	})
 }
 

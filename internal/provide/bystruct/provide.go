@@ -110,8 +110,17 @@ func (reg *registration) markDeps(rty reflect.Type, accessFromRoot func(reflect.
 			continue
 		}
 
-		locateFn := func(sv reflect.Value) reflect.Value {
-			return accessFromRoot(sv).Field(i)
+		var locateFn func(sv reflect.Value) reflect.Value
+		if sf.IsExported() {
+			locateFn = func(sv reflect.Value) reflect.Value {
+				return accessFromRoot(sv).Field(i)
+			}
+		} else {
+			// For unexported fields, reflect.NewAt harshly
+			locateFn = func(sv reflect.Value) reflect.Value {
+				addr := accessFromRoot(sv).Field(i).Addr().UnsafePointer()
+				return reflect.NewAt(sf.Type, addr).Elem()
+			}
 		}
 
 		// Handle subclass dependencies
