@@ -96,6 +96,9 @@ func (reg *registration) markDeps(rty reflect.Type, accessFromRoot func(reflect.
 		reg.dependencies = append(reg.dependencies, &dependency{
 			key:      TypeNameKey{Ty: depRty, Name: tag.Name},
 			locateFn: locateFn,
+
+			individual: tag.Individual,
+			optional:   tag.Optional,
 		})
 	}
 }
