@@ -4,32 +4,48 @@ import (
 	"reflect"
 )
 
-func ProvideStruct[T IInjectable](scopes ...*Scope) {
-	ss := getScopes(scopes...)
+type registration struct {
+	key TypeNameKey
+	// the constructor of the target type, only appears when all dependencies are satisfied
+	ctor func() (reflect.Value, error)
+
+	dependencies []*dependency
+	nestCtors    []func(root reflect.Value)
+}
+
+type dependency struct {
+	key TypeNameKey
+	// given the top level struct value, locate the dependency field reflect value (ptr in no reflect version)
+	locateFn func(reflect.Value) reflect.Value
+
+	optional   bool
+	individual bool
+
+	satisfiedBy *registration
+}
+
+func ProvideStruct[T IInjectable](opts ...Option) {
+	opt := DefaultProvideOptions()
+	for _, o := range opts {
+		o(opt)
+	}
+
 	rty := reflect.TypeFor[T]()
 
-	concreteRty := rty
-	for concreteRty.Kind() == reflect.Pointer {
-		concreteRty = concreteRty.Elem()
-	}
-	if concreteRty.Kind() != reflect.Struct {
-		panic("dirt: only struct can be provided")
-	}
-
 	reg := registration{
-		key:          TypeNameKey{Ty: rty},
-		concreteType: concreteRty,
+		key: TypeNameKey{Ty: rty, Name: opt.Name},
 	}
 
-	reg.markDeps(concreteRty, func(v reflect.Value) reflect.Value {
+	reg.markDeps(rty, func(v reflect.Value) reflect.Value {
 		return v
 	})
 
-	ss.writeRegistration(reg)
+	s := opt.Scope
+	s.writeRegistration(reg)
 	for modified := true; modified; {
 		modified = false
-		for _, reg := range ss.iterRegistration() {
-			modified = reg.resolvePossibleDeps(ss) || modified
+		for reg := range s.iterRegistration() {
+			modified = reg.resolvePossibleDeps(s) || modified
 			if modified {
 				break
 			}
@@ -37,55 +53,49 @@ func ProvideStruct[T IInjectable](scopes ...*Scope) {
 	}
 }
 
-func Invoke[T any](scopes ...*Scope) (T, error) {
-	ss := getScopes(scopes...)
-	key := TypeNameKey{Ty: reflect.TypeFor[T]()}
-
-	if ins, ok := ss.getInstance(key); ok {
-		typed, ok := ins.Interface().(T)
-		if !ok {
-			panic("dirt: instance type does not match the requested type")
-		}
-		return typed, nil
+func Invoke[T any](opts ...Option) (T, error) {
+	opt := DefaultProvideOptions()
+	for _, o := range opts {
+		o(opt)
 	}
 
-	for _, reg := range ss.iterRegistration() {
-		if reg.key == key {
-			if reg.ctor == nil {
-				panic("dirt: type: " + key.Ty.String() + " has unsatisfied dependencies")
-			}
-			ins, err := reg.ctor()
-			if err != nil {
-				return *new(T), err
-			}
-			ss.writeInstance(key, ins)
-			typed, ok := ins.Interface().(T)
-			if !ok {
-				panic("dirt: instance type does not match the requested type")
-			}
-			return typed, nil
+	key := TypeNameKey{Ty: reflect.TypeFor[T](), Name: opt.Name}
+	s := opt.Scope
+
+	ins, ok := s.getInstance(key)
+	if !ok {
+		_ins, err := s.invokeInstance(key)
+		if err != nil {
+			return *new(T), err
 		}
+		ins = _ins
 	}
 
-	panic("dirt: no provider found for type " + key.Ty.String())
+	typed, ok := ins.Interface().(T)
+	if !ok {
+		panic("dirt: instance type does not match the requested type")
+	}
+	return typed, nil
 }
 
-func (reg *registration) markDeps(structRty reflect.Type, rootToStructFn func(reflect.Value) reflect.Value) {
-	if structRty.Kind() == reflect.Pointer {
-		elemTy := structRty.Elem()
-		reg.markDeps(elemTy, func(v reflect.Value) reflect.Value {
-			return rootToStructFn(v).Elem()
+// markDeps recursively marks the dependencies of struct, including nested/indirect access
+func (reg *registration) markDeps(rty reflect.Type, accessFromRoot func(reflect.Value) reflect.Value) {
+	if rty.Kind() == reflect.Pointer {
+		elemTy := rty.Elem()
+		reg.nestCtors = append(reg.nestCtors, func(root reflect.Value) {
+			accessFromRoot(root).Set(reflect.New(elemTy))
 		})
+		reg.markDeps(elemTy, func(v reflect.Value) reflect.Value { return accessFromRoot(v).Elem() })
 		return
 	}
-	for i := 0; i < structRty.NumField(); i++ {
-		sf := structRty.Field(i)
+	for i := range rty.NumField() {
+		sf := rty.Field(i)
 		// Skip Injectable indicator
 		if sf.Type == reflect.TypeFor[Injectable]() {
 			continue
 		}
 		locateFn := func(sv reflect.Value) reflect.Value {
-			return rootToStructFn(sv).Field(i)
+			return accessFromRoot(sv).Field(i)
 		}
 
 		// Handle subclass dependencies
@@ -112,7 +122,7 @@ func (reg *registration) markDeps(structRty reflect.Type, rootToStructFn func(re
 }
 
 // Return modified
-func (reg *registration) resolvePossibleDeps(ss scopes) bool {
+func (reg *registration) resolvePossibleDeps(s *Scope) bool {
 	modified := false
 
 	if reg.ctor != nil {
@@ -123,7 +133,7 @@ func (reg *registration) resolvePossibleDeps(ss scopes) bool {
 		if dep.satisfiedBy != nil {
 			continue
 		}
-		for _, possible := range ss.iterRegistration() {
+		for possible := range s.iterRegistration() {
 			if possible.key == dep.key && possible.ctor != nil {
 				dep.satisfiedBy = possible
 				modified = true
@@ -143,53 +153,44 @@ func (reg *registration) resolvePossibleDeps(ss scopes) bool {
 	if !allDepsSatisfied {
 		return modified
 	}
+	reg.buildCtor(s)
+	return true
+}
 
+func (reg *registration) buildCtor(s *Scope) {
 	reg.ctor = func() (reflect.Value, error) {
 		instance := reflect.New(reg.key.Ty).Elem()
-		concrete := instance
-		for concrete.Kind() == reflect.Pointer {
-			concrete.Set(reflect.New(concrete.Type().Elem()))
-			concrete = concrete.Elem()
-		}
-		if concrete.Type() != reg.concreteType {
-			panic("dirt: concrete type does not match the registration type")
+		for _, nest := range reg.nestCtors {
+			nest(instance)
 		}
 
 		for _, dep := range reg.dependencies {
-			// Check if the dependency instance is already created
-			if ins, ok := ss.getInstance(dep.key); ok {
-				dep.locateFn(concrete).Set(ins)
+			// If the dependency is individual, we need to invoke it directly without checking the instance repo
+			if dep.individual {
+				ins, err := dep.satisfiedBy.ctor()
+				if err == nil {
+					dep.locateFn(instance).Set(ins)
+				} else if !dep.optional { // If the dependency is not optional, return error
+					return reflect.Value{}, err
+				}
 				continue
 			}
-			// TODO: implement individual
 
-			// If not, create the dependency instance
-			ins, err := dep.satisfiedBy.ctor()
-			if err != nil {
+			// Check if the dependency instance is already created
+			if ins, ok := s.getInstance(dep.key); ok {
+				dep.locateFn(instance).Set(ins)
+				continue
+			}
+
+			// If not, invoke the dependency
+			ins, err := s.invokeInstance(dep.key)
+			if err == nil {
+				dep.locateFn(instance).Set(ins)
+			} else if !dep.optional { // If the dependency is not optional, return error
 				return reflect.Value{}, err
 			}
-			dep.locateFn(concrete).Set(ins)
-			ss.writeInstance(dep.key, ins)
 		}
 
 		return instance, nil
 	}
-	return true
-}
-
-type registration struct {
-	key          TypeNameKey
-	concreteType reflect.Type
-	// the constructor of the target type, only appears when all dependencies are satisfied
-	ctor func() (reflect.Value, error)
-
-	dependencies []*dependency
-}
-
-type dependency struct {
-	key TypeNameKey
-	// given the top level struct value, locate the dependency field reflect value (ptr in no reflect version)
-	locateFn func(reflect.Value) reflect.Value
-
-	satisfiedBy *registration
 }

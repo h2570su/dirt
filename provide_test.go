@@ -18,17 +18,17 @@ func TestProvideStruct(t *testing.T) {
 
 	t.Run("A,B", func(t *testing.T) {
 		scope := &Scope{}
-		ProvideStruct[*ServiceA](scope)
-		ProvideStruct[*ServiceB](scope)
+		ProvideStruct[*ServiceA](Scoped(scope))
+		ProvideStruct[*ServiceB](Scoped(scope))
 
-		b, err := Invoke[*ServiceB](scope)
+		b, err := Invoke[*ServiceB](Scoped(scope))
 		if err != nil {
 			t.Fatal(err)
 		}
 		if b.A == nil {
 			t.Fatal("dependency not injected")
 		}
-		a, err := Invoke[*ServiceA](scope)
+		a, err := Invoke[*ServiceA](Scoped(scope))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -39,17 +39,17 @@ func TestProvideStruct(t *testing.T) {
 
 	t.Run("B,A", func(t *testing.T) {
 		scope := &Scope{}
-		ProvideStruct[*ServiceB](scope)
-		ProvideStruct[*ServiceA](scope)
+		ProvideStruct[*ServiceB](Scoped(scope))
+		ProvideStruct[*ServiceA](Scoped(scope))
 
-		b, err := Invoke[*ServiceB](scope)
+		b, err := Invoke[*ServiceB](Scoped(scope))
 		if err != nil {
 			t.Fatal(err)
 		}
 		if b.A == nil {
 			t.Fatal("dependency not injected")
 		}
-		a, err := Invoke[*ServiceA](scope)
+		a, err := Invoke[*ServiceA](Scoped(scope))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -71,13 +71,13 @@ func BenchmarkProvideStruct(b *testing.B) {
 		A *ServiceA `dirt:""`
 	}
 	scope := &Scope{}
-	ProvideStruct[*ServiceA](scope)
-	ProvideStruct[*ServiceB](scope)
+	ProvideStruct[*ServiceA](Scoped(scope))
+	ProvideStruct[*ServiceB](Scoped(scope))
 
 	b.Run("Invoke", func(b *testing.B) {
 		b.ResetTimer()
 		for b.Loop() {
-			_, err := Invoke[*ServiceB](scope)
+			_, err := Invoke[*ServiceB](Scoped(scope))
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -98,7 +98,7 @@ func BenchmarkProvideStruct(b *testing.B) {
 		b.ResetTimer()
 		var sb **ServiceB
 		for b.Loop() {
-			a, _ := Invoke[*ServiceA](scope)
+			a, _ := Invoke[*ServiceA](Scoped(scope))
 			sbp := new(*ServiceB)
 			*sbp = &ServiceB{
 				A: a,
