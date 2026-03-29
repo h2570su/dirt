@@ -85,7 +85,7 @@ func TestProvideStructNested(t *testing.T) {
 
 			A *ServiceA `dirt:""`
 		}
-		GroupB struct {
+		GroupB *struct {
 			Subclass
 
 			AA *ServiceAA `dirt:""`
