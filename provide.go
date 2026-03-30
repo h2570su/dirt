@@ -4,6 +4,7 @@ import (
 	"git.ttech.cc/astaroth/dirt/core"
 	"git.ttech.cc/astaroth/dirt/internal/provide/byctor"
 	"git.ttech.cc/astaroth/dirt/internal/provide/bystruct"
+	"git.ttech.cc/astaroth/dirt/internal/provide/byvalue"
 )
 
 // ProvideStruct registers the struct type T to be provided by the container.
@@ -30,4 +31,13 @@ func ProvideCtor(fn any, opts ...core.Option) {
 		opt = o(opt)
 	}
 	byctor.ProvideCtor(fn, opt)
+}
+
+// ProvideValue registers the value prototype of the target type
+func ProvideValue[T any](value T, opts ...core.Option) {
+	var opt core.Options
+	for _, o := range opts {
+		opt = o(opt)
+	}
+	byvalue.ProvideValue(value, opt)
 }
