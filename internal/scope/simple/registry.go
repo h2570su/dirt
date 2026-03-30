@@ -70,6 +70,7 @@ func (s *Registry) loopDetect() {
 			}
 		}
 		if reg == nil {
+			delete(trail, key)
 			return true
 		}
 		for _, dep := range reg.DirectDeps() {
