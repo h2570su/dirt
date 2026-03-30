@@ -17,7 +17,7 @@ var _nope = nope{}
 //
 //	The dependencies of T determined by its fields and tags.
 func ProvideStruct[T bystruct.IInjectable](opts ...core.Option) nope {
-	var opt core.Options
+	opt := defaultOptions
 	for _, o := range opts {
 		opt = o(opt)
 	}
@@ -33,7 +33,7 @@ func ProvideStruct[T bystruct.IInjectable](opts ...core.Option) nope {
 //
 // variadic arg will be ignored
 func ProvideCtor(fn any, opts ...core.Option) nope {
-	var opt core.Options
+	opt := defaultOptions
 	for _, o := range opts {
 		opt = o(opt)
 	}
@@ -43,7 +43,7 @@ func ProvideCtor(fn any, opts ...core.Option) nope {
 
 // ProvideValue registers the value prototype of the target type
 func ProvideValue[T any](value T, opts ...core.Option) nope {
-	var opt core.Options
+	opt := defaultOptions
 	for _, o := range opts {
 		opt = o(opt)
 	}
