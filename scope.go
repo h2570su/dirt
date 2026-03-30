@@ -10,3 +10,5 @@ type typeNameKey = core.TypeNameKey
 var globalScope = &Scope{}
 
 type Scope = simple.Scope
+
+func GlobalScope() *Scope { return globalScope }
