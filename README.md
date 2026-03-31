@@ -68,6 +68,8 @@ So I want to use injection by field as the major way, and ctor is just a supplem
   - Read/write registrations and instances in the specified scope.
 - `GlobalScope() *dirt.Scope`
   - Access the default global scope.
+- `NewScopeWithGlobalRegistry() *dirt.Scope`
+  - Create a new scope with the global registry, so it can see all global registrations but manage its own instances.
 
 ### Struct Indicators & Hook
 

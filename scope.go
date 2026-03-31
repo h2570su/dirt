@@ -7,8 +7,12 @@ import (
 
 type typeNameKey = core.TypeNameKey
 
-var globalScope = &Scope{}
+var globalScope = simple.NewScope()
 
 type Scope = simple.Scope
 
 func GlobalScope() *Scope { return globalScope }
+
+func NewScopeWithGlobalRegistry() *Scope {
+	return &Scope{IRegistry: globalScope, IContainer: &simple.Container{}}
+}

@@ -9,11 +9,13 @@ import (
 )
 
 type Scope struct {
-	Registry
-	Container
+	core.IRegistry
+	core.IContainer
 
 	// TODO: thread-safety
 }
+
+func NewScope() *Scope { return &Scope{IRegistry: &Registry{}, IContainer: &Container{}} }
 
 func (s *Scope) Instantiate(key core.TypeNameKey) (any, error) {
 	var reg core.Registration

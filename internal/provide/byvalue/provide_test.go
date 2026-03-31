@@ -26,7 +26,7 @@ type TypeKey[T any] struct{}
 
 func BenchmarkInvoke(b *testing.B) {
 	type ValueA int
-	scope := &dirt.Scope{}
+	scope := simple.NewScope()
 	byvalue.ProvideValue(ValueA(123), opt(dirt.Scoped(scope)))
 
 	b.Run("dirt", func(b *testing.B) {
@@ -60,7 +60,7 @@ func BenchmarkInvoke(b *testing.B) {
 func BenchmarkInstantiate(b *testing.B) {
 	type ValueA int
 
-	scope := &dirt.Scope{}
+	scope := simple.NewScope()
 	byvalue.ProvideValue(ValueA(123), opt(dirt.Scoped(scope)))
 
 	b.Run("dirt", func(b *testing.B) {
@@ -89,7 +89,7 @@ func TestProvideValue(t *testing.T) {
 	type ValueA int
 
 	t.Run("value type", func(t *testing.T) {
-		scope := &dirt.Scope{}
+		scope := simple.NewScope()
 		byvalue.ProvideValue(ValueA(123), opt(dirt.Scoped(scope)))
 
 		_a, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[ValueA]()})
@@ -103,7 +103,7 @@ func TestProvideValue(t *testing.T) {
 	})
 
 	t.Run("pointer type", func(t *testing.T) {
-		scope := &dirt.Scope{}
+		scope := simple.NewScope()
 		ins := ValueA(123)
 		byvalue.ProvideValue(&ins, opt(dirt.Scoped(scope)))
 
@@ -126,7 +126,7 @@ func TestProvideValueNamed(t *testing.T) {
 	type ValueA int
 
 	t.Run("named values", func(t *testing.T) {
-		scope := &dirt.Scope{}
+		scope := simple.NewScope()
 		byvalue.ProvideValue(ValueA(123), opt(dirt.Scoped(scope), dirt.Named("a")))
 		byvalue.ProvideValue(ValueA(456), opt(dirt.Scoped(scope), dirt.Named("b")))
 
@@ -149,7 +149,7 @@ func TestProvideValueNamed(t *testing.T) {
 		}
 	})
 	t.Run("named pointers", func(t *testing.T) {
-		scope := &dirt.Scope{}
+		scope := simple.NewScope()
 		insA := ValueA(123)
 		insB := ValueA(456)
 		byvalue.ProvideValue(&insA, opt(dirt.Scoped(scope), dirt.Named("a")))
@@ -196,7 +196,7 @@ func (h *HookTestStub) PostInject() error {
 func TestProvideStructWithHook(t *testing.T) {
 	t.Run("*T hook", func(t *testing.T) {
 		var _ hook.IPostInjectHook = (*HookTestStub)(nil) // Ensure *HookTestStub implements IPostInjectHook
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		ins := HookTestStub("")
 		byvalue.ProvideValue(&ins, opt(dirt.Scoped(scope)))
 
@@ -210,7 +210,7 @@ func TestProvideStructWithHook(t *testing.T) {
 		}
 	})
 	t.Run("T hook", func(t *testing.T) {
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		ins := HookTestStub("")
 		byvalue.ProvideValue(ins, opt(dirt.Scoped(scope)))
 
@@ -225,7 +225,7 @@ func TestProvideStructWithHook(t *testing.T) {
 	})
 
 	t.Run("hook error", func(t *testing.T) {
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		ins := HookTestStub("error")
 		byvalue.ProvideValue(&ins, opt(dirt.Scoped(scope)))
 

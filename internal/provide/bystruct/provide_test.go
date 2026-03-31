@@ -32,7 +32,7 @@ func BenchmarkInvoke(b *testing.B) {
 	type ServiceB struct {
 		A *ServiceA `dirt:""`
 	}
-	scope := &dirt.Scope{}
+	scope := simple.NewScope()
 	bystruct.ProvideStruct[*ServiceA](opt(dirt.Scoped(scope)))
 	bystruct.ProvideStruct[*ServiceB](opt(dirt.Scoped(scope)))
 
@@ -77,7 +77,7 @@ func BenchmarkInstantiate(b *testing.B) {
 		a *ServiceA `dirt:"individual"` //nolint:unused
 	}
 
-	scope := &dirt.Scope{}
+	scope := simple.NewScope()
 	bystruct.ProvideStruct[*ServiceA](opt(dirt.Scoped(scope)))
 	bystruct.ProvideStruct[*ServiceB](opt(dirt.Scoped(scope)))
 	bystruct.ProvideStruct[*ServiceBa](opt(dirt.Scoped(scope)))
@@ -154,7 +154,7 @@ func TestProvideStruct(t *testing.T) {
 	}
 
 	t.Run("A,B", func(t *testing.T) {
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceAA](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope)))
@@ -163,7 +163,7 @@ func TestProvideStruct(t *testing.T) {
 	})
 
 	t.Run("B,A", func(t *testing.T) {
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceAA](opt(core.Scoped(scope)))
@@ -181,7 +181,7 @@ func TestProvideStructUnexported(t *testing.T) {
 	}
 
 	t.Run("A,B", func(t *testing.T) {
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope)))
 
@@ -217,7 +217,7 @@ func TestProvideStructNested(t *testing.T) {
 	}
 
 	t.Run("A,B", func(t *testing.T) {
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceAA](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope)))
@@ -279,7 +279,7 @@ func TestProvideStructNamed(t *testing.T) {
 	}
 
 	t.Run("A,B", func(t *testing.T) {
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope), core.Named("aa")))
 		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope), core.Named("ab")))
 		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope)))
@@ -288,7 +288,7 @@ func TestProvideStructNamed(t *testing.T) {
 	})
 
 	t.Run("B,A", func(t *testing.T) {
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope), core.Named("aa")))
 		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope), core.Named("ab")))
@@ -314,7 +314,7 @@ func TestProvideStructWithHook(t *testing.T) {
 
 	t.Run("*T hook", func(t *testing.T) {
 		var _ hook.IPostInjectHook = (*ServiceA)(nil) // Ensure *ServiceA implements IPostInjectHook
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope)))
 
 		_a, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceA]()})
@@ -327,7 +327,7 @@ func TestProvideStructWithHook(t *testing.T) {
 		}
 	})
 	t.Run("T hook", func(t *testing.T) {
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope)))
 
 		_a, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceA]()})
@@ -345,7 +345,7 @@ func TestProvideStructWithHook(t *testing.T) {
 		type ServiceB struct {
 			HookTestErrorMixin
 		}
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope)))
 
 		_, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceB]()})
@@ -372,7 +372,7 @@ func TestProvideStructOptional(t *testing.T) {
 			Master *ServiceSuccess `dirt:""`
 			Slave  *ServiceFail    `dirt:"optional"`
 		}
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceSuccess](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceFail](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*Service](opt(core.Scoped(scope)))
@@ -394,7 +394,7 @@ func TestProvideStructOptional(t *testing.T) {
 			Slave  *ServiceFail    `dirt:"optional"`
 			Master *ServiceSuccess `dirt:""`
 		}
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceSuccess](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceFail](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*Service](opt(core.Scoped(scope)))
@@ -417,7 +417,7 @@ func TestProvideStructOptional(t *testing.T) {
 			Master *ServiceSuccess `dirt:"individual"`
 			Slave  *ServiceFail    `dirt:"optional,individual"`
 		}
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceSuccess](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceFail](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*Service](opt(core.Scoped(scope)))
@@ -441,7 +441,7 @@ func TestProvideStructOptional(t *testing.T) {
 			Master *ServiceSuccess  `dirt:""`
 			Slave  *ServiceNotExist `dirt:"optional"`
 		}
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceSuccess](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*Service](opt(core.Scoped(scope)))
 
@@ -489,26 +489,26 @@ func TestProvideStructLoop(t *testing.T) {
 	}
 	t.Run("loop A->B->A", func(t *testing.T) {
 		defer validate()
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceLoopABAa](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceLoopABAb](opt(core.Scoped(scope)))
 	})
 	t.Run("loop A->B,individual", func(t *testing.T) {
 		defer validate()
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceLoopABAa](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceLoopABAa](opt(core.Scoped(scope)))
 	})
 	t.Run("loop A->B->C->A", func(t *testing.T) {
 		defer validate()
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceLoopABCAa](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceLoopABCAb](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceLoopABCAc](opt(core.Scoped(scope)))
 	})
 	t.Run("loop A->B->C->A,individual", func(t *testing.T) {
 		defer validate()
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		bystruct.ProvideStruct[*ServiceLoopABCAa](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceLoopABCAb](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceLoopABCAa](opt(core.Scoped(scope)))

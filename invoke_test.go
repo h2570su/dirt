@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/h2570su/dirt"
+	"github.com/h2570su/dirt/internal/scope/simple"
 )
 
 func TestInvokeIndividual(t *testing.T) {
@@ -15,7 +16,7 @@ func TestInvokeIndividual(t *testing.T) {
 		A *ServiceA `dirt:""`
 	}
 
-	scope := &dirt.Scope{}
+	scope := simple.NewScope()
 	dirt.ProvideStruct[*ServiceA](dirt.Scoped(scope))
 	dirt.ProvideStruct[*ServiceB](dirt.Scoped(scope))
 
@@ -41,7 +42,7 @@ func TestInvokeIndividualInner(t *testing.T) {
 		A *ServiceA `dirt:"individual"`
 	}
 
-	scope := &dirt.Scope{}
+	scope := simple.NewScope()
 	dirt.ProvideStruct[*ServiceA](dirt.Scoped(scope))
 	dirt.ProvideStruct[*ServiceB](dirt.Scoped(scope))
 
@@ -74,7 +75,7 @@ func TestInvokeAs(t *testing.T) {
 		A *ServiceA `dirt:""`
 	}
 
-	scope := &dirt.Scope{}
+	scope := simple.NewScope()
 	dirt.ProvideStruct[*ServiceA](dirt.Scoped(scope))
 	dirt.ProvideStruct[*ServiceB](dirt.Scoped(scope))
 	dirt.ProvideStruct[*ServiceC](dirt.Scoped(scope))

@@ -32,7 +32,7 @@ func BenchmarkInvoke(b *testing.B) {
 	type ServiceB struct {
 		A *ServiceA
 	}
-	scope := &dirt.Scope{}
+	scope := simple.NewScope()
 	byctor.ProvideCtor(func() *ServiceA { return &ServiceA{} }, opt(dirt.Scoped(scope)))
 	byctor.ProvideCtor(func(a *ServiceA) *ServiceB { return &ServiceB{A: a} }, opt(dirt.Scoped(scope)))
 
@@ -74,7 +74,7 @@ func BenchmarkInstantiate(b *testing.B) {
 		A *ServiceA
 	}
 
-	scope := &dirt.Scope{}
+	scope := simple.NewScope()
 	byctor.ProvideCtor(func() *ServiceA { return &ServiceA{} }, opt(dirt.Scoped(scope)))
 	byctor.ProvideCtor(func(a *ServiceA) *ServiceB { return &ServiceB{A: a} }, opt(dirt.Scoped(scope)))
 
@@ -140,7 +140,7 @@ func TestProvideCtor(t *testing.T) {
 	}
 
 	t.Run("A,B", func(t *testing.T) {
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		byctor.ProvideCtor(func() *ServiceA { return &ServiceA{} }, opt(core.Scoped(scope)))
 		byctor.ProvideCtor(func() *ServiceAA { return &ServiceAA{} }, opt(core.Scoped(scope)))
 		byctor.ProvideCtor(func(a *ServiceA, aa *ServiceAA) *ServiceB { return &ServiceB{A: a, AA: aa} }, opt(core.Scoped(scope)))
@@ -149,7 +149,7 @@ func TestProvideCtor(t *testing.T) {
 	})
 
 	t.Run("B,A", func(t *testing.T) {
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		byctor.ProvideCtor(func(a *ServiceA, aa *ServiceAA) *ServiceB { return &ServiceB{A: a, AA: aa} }, opt(core.Scoped(scope)))
 		byctor.ProvideCtor(func() *ServiceA { return &ServiceA{} }, opt(core.Scoped(scope)))
 		byctor.ProvideCtor(func() *ServiceAA { return &ServiceAA{} }, opt(core.Scoped(scope)))
@@ -158,7 +158,7 @@ func TestProvideCtor(t *testing.T) {
 	})
 
 	t.Run("B,A, b invoke first", func(t *testing.T) {
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		byctor.ProvideCtor(func(a *ServiceA, aa *ServiceAA) *ServiceB { return &ServiceB{A: a, AA: aa} }, opt(core.Scoped(scope)))
 		byctor.ProvideCtor(func() *ServiceA { return &ServiceA{} }, opt(core.Scoped(scope)))
 		byctor.ProvideCtor(func() *ServiceAA { return &ServiceAA{} }, opt(core.Scoped(scope)))
@@ -175,7 +175,7 @@ func TestProvideCtor(t *testing.T) {
 		type ServiceC struct {
 			Config string
 		}
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		byctor.ProvideCtor(func() (*ServiceC, error) { return &ServiceC{}, nil }, opt(core.Scoped(scope)))
 
 		_c, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceC]()})
@@ -195,7 +195,7 @@ func TestProvideCtor(t *testing.T) {
 		type ServiceD struct {
 			Config string
 		}
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		byctor.ProvideCtor(func() (*ServiceD, error) { return nil, errors.New("nope") }, opt(core.Scoped(scope)))
 
 		_d, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceD]()})
@@ -229,7 +229,7 @@ func TestProvideCtorNamed(t *testing.T) {
 	}
 
 	t.Run("aa,ab", func(t *testing.T) {
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		byctor.ProvideCtor(func() *ServiceA { return &ServiceA{} }, opt(core.Scoped(scope), core.Named("aa")))
 		byctor.ProvideCtor(func() *ServiceA { return &ServiceA{} }, opt(core.Scoped(scope), core.Named("ab")))
 
@@ -254,7 +254,7 @@ func TestProvideStructWithHook(t *testing.T) {
 
 	t.Run("*T hook", func(t *testing.T) {
 		var _ hook.IPostInjectHook = (*ServiceA)(nil) // Ensure *ServiceA implements IPostInjectHook
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		byctor.ProvideCtor(func() *ServiceA { return &ServiceA{} }, opt(core.Scoped(scope)))
 
 		_a, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceA]()})
@@ -267,7 +267,7 @@ func TestProvideStructWithHook(t *testing.T) {
 		}
 	})
 	t.Run("T hook", func(t *testing.T) {
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		byctor.ProvideCtor(func() *ServiceA { return &ServiceA{} }, opt(core.Scoped(scope)))
 
 		_a, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceA]()})
@@ -285,7 +285,7 @@ func TestProvideStructWithHook(t *testing.T) {
 		type ServiceB struct {
 			HookTestErrorMixin
 		}
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		byctor.ProvideCtor(func() *ServiceB { return &ServiceB{} }, opt(core.Scoped(scope)))
 
 		_, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceB]()})
@@ -327,14 +327,14 @@ func TestProvideStructLoop(t *testing.T) {
 	}
 	t.Run("loop A->B->A", func(t *testing.T) {
 		defer validate()
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		byctor.ProvideCtor(func(dep *ServiceLoopABAb) *ServiceLoopABAa { return &ServiceLoopABAa{Dep: dep} }, opt(core.Scoped(scope)))
 		byctor.ProvideCtor(func(dep *ServiceLoopABAa) *ServiceLoopABAb { return &ServiceLoopABAb{Dep: dep} }, opt(core.Scoped(scope)))
 	})
 
 	t.Run("loop A->B->C->A", func(t *testing.T) {
 		defer validate()
-		scope := &simple.Scope{}
+		scope := simple.NewScope()
 		byctor.ProvideCtor(func(dep *ServiceLoopABCAb) *ServiceLoopABCAa { return &ServiceLoopABCAa{Dep: dep} }, opt(core.Scoped(scope)))
 		byctor.ProvideCtor(func(dep *ServiceLoopABCAc) *ServiceLoopABCAb { return &ServiceLoopABCAb{Dep: dep} }, opt(core.Scoped(scope)))
 		byctor.ProvideCtor(func(dep *ServiceLoopABCAa) *ServiceLoopABCAc { return &ServiceLoopABCAc{Dep: dep} }, opt(core.Scoped(scope)))
