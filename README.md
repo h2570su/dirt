@@ -1,6 +1,12 @@
-# dirt is a DI framework for Go 1.22+, inspired by samber/do/v2
+# dirt is a DI framework for Go 1.24+, inspired by samber/do/v2
 
-DIRT stands for "Dependency Injection powered by Reflection and focus on Type itself using generic".
+DIRT stands for "Dependency Injection powered by Reflection and generic Types".
+
+To install:
+
+```bash
+go get github.com/h2570su/dirt
+```
 
 ## Why
 
@@ -16,46 +22,65 @@ I like the design of samber/do/v2, but in my experience with it, I found some li
 The inspiration of golang at struct is zero-value initialization, which doesn't require any ctor, even New()... pattern is common.
 So I want to use injection by field as the major way, and ctor is just a supplement for some special cases, e.g. when the struct is not injectable, or when the struct is from external package and cannot be modified.
 
-## Target
-
-Final Target of this project is:
-
-1. Global type registration:
-1.1. `ProvideStruct[Type]()`, I hate ctor so don't want resolve deps by ctor, which is cannot be build in run-time.
-1.2. `var _ = ProvideStruct[Type]()`, shorter then `func init() { do.ProvideStruct[Type]() }`
-1.2.1 `ProvideStruct[Type]()` can restrict the struct to embedded a specific struct `dirt.Injectable` with a unexported method, by generic constraint.
-1.2.2 `ProvideStruct[Type]()` support nested struct or *struct, by checking `dirt.Injectable`
-1.3. `PreannounceInterface[Interface]()`, for faster invoke/inject when starting of invoke-chain, don't resolve on the fly.
-1.3.1 Refresh implementation table on every provide/preannounce, ensure the execution order of provide/preannounce won't affect the result.
-2. Post-inject initialization: if the struct implements IPostInject, PostInject() will be called after all field injections are done.
-3. Inject by field tag/by Ctor, both supported. Ctor one may be `ProvideCtor(func(deps...) (Type, error))`
-4. DI container majorly uses global scope, custom scope is also supported
-4.1 `ProvideXXX(...Scope)`/`PreannounceInterface(...Scope)`, if Scope is not provided, use global scope by default, otherwise provide to all given scopes
-4.2. `dirt.GlobalScope` is the global scope
-4.3. `InvokeXXX(Scope)`, if Scope is not provided, use global scope by default, otherwise invoke from the given scope.
-5. Exportable API, useful for lifecycle management, dependency graph visualization, etc.
-5.1. Return all registered types, their dependencies, etc.
-5.2. Return all invoked instances in `any`, with in invoke order, for lifecycle management maybe.
-6. Initialization of external resources in ctor/PostInject is not recommended, initialization logic should be simplified as much as possible.
-6.1. These operations are better to be done by lifecycle management. `Startup(ctx)error`/`Shutdown(ctx)error`
-7. Struct tag `dirt` for field injection customization
-
 ## Features
 
-### Tag
+### Registration API
 
-Fields don't hold a tag will be ignored by default.
+- `ProvideStruct[T dirt.Injectable](opts ...dirt.Option)`
+  - Register an injectable struct type by field analysis.
+  - Return a dummy value so you can do `var _ = dirt.ProvideStruct[MyType]()`.
+  - Field Tag (`dirt`). Only tagged fields are injected by default.
+    - `dirt:"-"`: ignore this field.
+    - `dirt:"name:xxx"`: inject dependency by name.
+    - `dirt:"optional"`: dependency is optional.
+    - `dirt:"individual"`: resolve this field as a fresh instance.
+    - Combine options with `,`, e.g. `dirt:"name:xxx,optional"`.
+    - **Interface dependency fields are not supported currently.**
+- `ProvideCtor(fn any, opts ...dirt.Option)`
+  - Register by constructor function.
+  - Supported signatures:
+    - `func(...deps) T`
+    - `func(...deps) (T, errorLike)`
+  - **Interface dependency arguments are not supported currently.**
+- `ProvideValue[T any](value T, opts ...dirt.Option)`
+  - Register a value prototype directly.
+- `ProvideAs[T any, I any](opts ...dirt.Option)` **(Not implemented yet)**
+  - Register type `T` as interface/base type `I`.
+  - `Invoke[I]` will return `T` instance, but `InvokeAs[I]` and `InvokeAsMany[I]` stay the same.
 
-- `dirt:"-"` to ignore the field. (even it's unnecessary)
-- `dirt:"name:xxx"` to specify the name of the dependency, default is anonymous `""`.
-- `dirt:"optional"` to specify the dependency is optional (default is required), if the dependency is not found or failed to invoke, let it as-is.
-- `dirt:"individual"` to specify the dependency should be resolved as individual instance, which means it won't be shared with other dependencies.
-- Using `,` to separate multiple options, e.g. `dirt:"name:xxx,optional"`.
+### Resolve API
+
+- `Invoke[T](opts ...dirt.Option) (T, error)`
+  - Resolve exact type `T` from scope (with caching/reuse by scope behavior).
+- `InvokeIndividual[T](opts ...dirt.Option) (T, error)`
+  - Always instantiate a fresh `T` (non-shared instance).
+- `InvokeAs[T](opts ...dirt.Option) (T, error)`
+  - Resolve as interface/base type and return one best match.
+- `InvokeAsMany[T](opts ...dirt.Option) iter.Seq2[T, error]`
+  - Iterate over all matches as `T`.
+
+### Options & Scope
+
+- `Named(name string) dirt.Option`
+  - Select/provide by name (default is empty name `""`).
+- `Scoped(scope core.IScope) dirt.Option`
+  - Read/write registrations and instances in the specified scope.
+- `GlobalScope() *dirt.Scope`
+  - Access the default global scope.
+
+### Struct Indicators & Hook
+
+- `dirt.Injectable`
+  - Embed this in structs intended for `ProvideStruct`.
+- `dirt.Subclass`
+  - Mark nested struct groups for recursive field injection.
+- `dirt.IPostInjectHook`
+  - Implement `PostInject() error` to run post-injection initialization.
 
 ## Appendix
 
-Future work:
+### Lifecycle management
 
-- Lifecycle management package
-- - Support `Startup(ctx)error`/`Shutdown(ctx)error` or `Run(ctx)error`
-- - As a plugin of dirt
+```bash
+go get github.com/h2570su/lifecycle
+```
