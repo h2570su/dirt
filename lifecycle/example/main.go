@@ -39,7 +39,11 @@ func newSlogLogger(cfg *loggerConfig) *slog.Logger {
 type worldConfig struct {
 	dirt.Injectable
 
-	logger      *loggerConfig       `dirt:""`
+	basic struct {
+		dirt.Subclass // dirt supports grouping fields to be injected together.
+
+		logger *loggerConfig `dirt:""`
+	}
 	metrics     *metrics.Config     `dirt:""`
 	cache       *cache.Config       `dirt:""`
 	repository  *repository.Config  `dirt:""`
@@ -70,7 +74,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("invoke worldConfig failed: %v", err)
 	}
-	*cfg.logger = loggerConfig{ServiceName: "example-app", Level: slog.LevelDebug}
+	*cfg.basic.logger = loggerConfig{ServiceName: "example-app", Level: slog.LevelDebug}
 	*cfg.metrics = metrics.Config{Namespace: "example", FlushEvery: 5 * time.Second}
 	*cfg.cache = cache.Config{MaxEntries: 1000}
 	*cfg.repository = repository.Config{Table: "users"}
@@ -85,7 +89,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("invoke components failed: %v", err)
 	}
-	app.logger.Info("example app wired", "api-addr", app.api.Addr(), "logger-level", cfg.logger.Level)
+	app.logger.Info("example app wired", "api-addr", app.api.Addr(), "logger-level", cfg.basic.logger.Level)
 
 	// Explicitly use the API demo flow so its dependency path is exercised.
 	app.api.DemoRequest("1001", 88)
@@ -95,7 +99,7 @@ func main() {
 	lc.Logger = app.logger
 	lc.StartupTimeout = 3 * time.Second
 	lc.ShutdownTimeout = 3 * time.Second
-	if err := lc.DirtAddAll(dirt.GlobalScope()); err != nil {
+	if err := lc.DirtAddAllFor(dirt.GlobalScope(), app); err != nil {
 		log.Fatalf("DirtAddAll failed: %v", err)
 	}
 
