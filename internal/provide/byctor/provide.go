@@ -146,7 +146,13 @@ func (reg *registration) ResolveDependencies(s core.IRegistry) {
 
 func (reg *registration) Ctor(s core.IScope) (reflect.Value, error) {
 	if reg.ctor == nil {
-		return reflect.Value{}, fmt.Errorf("dirt: type: %s has unsatisfied dependencies", reg.key.Type.String())
+		var unsatisfiedDeps []string
+		for _, dep := range reg.dependencies {
+			if dep.satisfiedBy == nil {
+				unsatisfiedDeps = append(unsatisfiedDeps, dep.key.String())
+			}
+		}
+		return reflect.Value{}, fmt.Errorf("dirt: type: %s has unsatisfied dependencies: %v", reg.key.Type.String(), unsatisfiedDeps)
 	}
 	return reg.ctor(s)
 }
