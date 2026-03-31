@@ -8,11 +8,11 @@ import (
 	"sync"
 	"testing"
 
-	"git.ttech.cc/astaroth/dirt"
-	"git.ttech.cc/astaroth/dirt/core"
-	"git.ttech.cc/astaroth/dirt/internal/hook"
-	"git.ttech.cc/astaroth/dirt/internal/provide/byctor"
-	"git.ttech.cc/astaroth/dirt/internal/scope/simple"
+	"github.com/h2570su/dirt"
+	"github.com/h2570su/dirt/core"
+	"github.com/h2570su/dirt/internal/hook"
+	"github.com/h2570su/dirt/internal/provide/byctor"
+	"github.com/h2570su/dirt/internal/scope/simple"
 )
 
 func opt(opts ...core.Option) core.Options {

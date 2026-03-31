@@ -1,7 +1,7 @@
 package bystruct
 
 import (
-	"git.ttech.cc/astaroth/dirt/internal"
+	"github.com/h2570su/dirt/internal"
 )
 
 type IInjectable interface {

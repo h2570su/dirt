@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"slices"
 
-	"git.ttech.cc/astaroth/dirt/core"
+	"github.com/h2570su/dirt/core"
 )
 
 // DirtAddAllFor adds the provided instance and its dependencies into the lifecycle from the provided scope.

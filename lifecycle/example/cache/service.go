@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"git.ttech.cc/astaroth/dirt"
+	"github.com/h2570su/dirt"
 )
 
 var (

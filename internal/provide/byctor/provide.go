@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strconv"
 
-	"git.ttech.cc/astaroth/dirt/core"
-	"git.ttech.cc/astaroth/dirt/internal/hook"
+	"github.com/h2570su/dirt/core"
+	"github.com/h2570su/dirt/internal/hook"
 )
 
 type registration struct {

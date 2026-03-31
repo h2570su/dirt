@@ -1,7 +1,7 @@
 package dirt
 
 import (
-	"git.ttech.cc/astaroth/dirt/internal/provide/bystruct"
+	"github.com/h2570su/dirt/internal/provide/bystruct"
 )
 
 // Injectable is an indicator to be embedded in struct to be provided by ProvideStruct.

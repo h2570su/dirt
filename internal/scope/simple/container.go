@@ -3,7 +3,7 @@ package simple
 import (
 	"sync"
 
-	"git.ttech.cc/astaroth/dirt/core"
+	"github.com/h2570su/dirt/core"
 )
 
 type Container struct {

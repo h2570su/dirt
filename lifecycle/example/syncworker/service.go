@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"time"
 
-	"git.ttech.cc/astaroth/dirt"
-	"git.ttech.cc/astaroth/dirt/lifecycle/example/metrics"
-	"git.ttech.cc/astaroth/dirt/lifecycle/example/repository"
+	"github.com/h2570su/dirt"
+	"github.com/h2570su/dirt/lifecycle/example/metrics"
+	"github.com/h2570su/dirt/lifecycle/example/repository"
 )
 
 var (

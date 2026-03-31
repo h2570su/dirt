@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"git.ttech.cc/astaroth/dirt"
+	"github.com/h2570su/dirt"
 )
 
 func TestInvokeIndividual(t *testing.T) {

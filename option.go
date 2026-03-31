@@ -1,6 +1,6 @@
 package dirt
 
-import "git.ttech.cc/astaroth/dirt/core"
+import "github.com/h2570su/dirt/core"
 
 type (
 	Options = core.Options

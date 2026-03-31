@@ -1,11 +1,11 @@
 package dirt
 
 import (
-	"git.ttech.cc/astaroth/dirt/core"
-	"git.ttech.cc/astaroth/dirt/internal"
-	"git.ttech.cc/astaroth/dirt/internal/provide/byctor"
-	"git.ttech.cc/astaroth/dirt/internal/provide/bystruct"
-	"git.ttech.cc/astaroth/dirt/internal/provide/byvalue"
+	"github.com/h2570su/dirt/core"
+	"github.com/h2570su/dirt/internal"
+	"github.com/h2570su/dirt/internal/provide/byctor"
+	"github.com/h2570su/dirt/internal/provide/bystruct"
+	"github.com/h2570su/dirt/internal/provide/byvalue"
 )
 
 // nope is a dummy type for var _ = ProvideXXX() for shorter than func init() { ProvideXXX() }

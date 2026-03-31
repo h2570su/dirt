@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"git.ttech.cc/astaroth/dirt/core"
+	"github.com/h2570su/dirt/core"
 )
 
 // IPostInjectHook is an interface that can be implemented by types that want to do post-injection initialization.

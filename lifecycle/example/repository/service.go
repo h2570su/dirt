@@ -3,8 +3,8 @@ package repository
 import (
 	"log/slog"
 
-	"git.ttech.cc/astaroth/dirt"
-	"git.ttech.cc/astaroth/dirt/lifecycle/example/cache"
+	"github.com/h2570su/dirt"
+	"github.com/h2570su/dirt/lifecycle/example/cache"
 )
 
 var (

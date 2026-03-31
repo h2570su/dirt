@@ -5,7 +5,7 @@ import (
 	"iter"
 	"slices"
 
-	"git.ttech.cc/astaroth/dirt/core"
+	"github.com/h2570su/dirt/core"
 )
 
 type Scope struct {
