@@ -13,6 +13,12 @@ type IRegistry interface {
 	IterRegistration() iter.Seq[Registration]
 	// WriteRegistration inserts/updates the registration of the provided named type into the registry
 	WriteRegistration(reg Registration)
+	// GetRegistration returns the registration of the provided named type, and whether it exists in the registry.
+	GetRegistration(key TypeNameKey) (Registration, bool)
+
+	// GetDependencies returns the dependencies of the provided named type, closer first.
+	//	Returns an error if the provided named type is not registered in the registry.
+	GetDependencies(key TypeNameKey) ([]TypeNameKey, error)
 }
 
 // Registration represents the registration of a provided named type

@@ -1,7 +1,9 @@
 package simple
 
 import (
+	"fmt"
 	"iter"
+	"slices"
 	"sync"
 
 	"git.ttech.cc/astaroth/dirt/core"
@@ -10,6 +12,56 @@ import (
 type Registry struct {
 	lock          sync.RWMutex
 	registrations []core.Registration
+}
+
+func (s *Registry) GetDependencies(key core.TypeNameKey) ([]core.TypeNameKey, error) {
+	var tree [][]core.TypeNameKey
+	tree = append(tree, []core.TypeNameKey{key})
+
+	// Iteratively traverse the dependency tree level by level until no more dependencies are found.
+	for currentLvl := 0; currentLvl < len(tree); currentLvl++ {
+		var currLvlDeps []core.TypeNameKey
+		for _, dep := range tree[currentLvl] {
+			r, ok := s.GetRegistration(dep)
+			if !ok {
+				return nil, fmt.Errorf("dirt: registration not found for type: `%s`", dep.Type.String())
+			}
+			currLvlDeps = append(currLvlDeps, r.DirectDeps()...)
+		}
+		if len(currLvlDeps) > 0 {
+			tree = append(tree, currLvlDeps)
+		}
+	}
+
+	// Flatten the tree into a single slice of dependencies, excluding the original key.
+	tree = tree[1:] // Remove the first level which is the key itself.
+	var flatTree []core.TypeNameKey
+	for _, lvl := range tree {
+		flatTree = append(flatTree, lvl...)
+	}
+
+	// Remove duplicates from the flat tree.
+	seen := make(map[core.TypeNameKey]struct{}, len(flatTree))
+	uniqueDeps := make([]core.TypeNameKey, 0, len(flatTree))
+	// Traverse in reverse to maintain the order of dependencies, deeper dependencies stay deeper in the list.
+	for _, dep := range slices.Backward(flatTree) {
+		if _, ok := seen[dep]; !ok {
+			seen[dep] = struct{}{}
+			uniqueDeps = append(uniqueDeps, dep)
+		}
+	}
+	slices.Reverse(uniqueDeps) // Reverse back to the original order.
+
+	return uniqueDeps, nil
+}
+
+func (s *Registry) GetRegistration(key core.TypeNameKey) (core.Registration, bool) { //nolint:ireturn
+	for reg := range s.IterRegistration() {
+		if reg.Key() == key {
+			return reg, true
+		}
+	}
+	return nil, false
 }
 
 func (s *Registry) IterRegistration() iter.Seq[core.Registration] {
