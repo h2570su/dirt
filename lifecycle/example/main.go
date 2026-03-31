@@ -40,7 +40,7 @@ type worldConfig struct {
 	dirt.Injectable
 
 	basic struct {
-		dirt.Subclass // dirt supports grouping fields to be injected together.
+		dirt.InjectingGroup // dirt supports grouping fields to be injected together.
 
 		logger *loggerConfig `dirt:""`
 	}
