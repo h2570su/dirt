@@ -37,8 +37,6 @@ func newSlogLogger(cfg *loggerConfig) *slog.Logger {
 }
 
 type worldConfig struct {
-	dirt.Injectable
-
 	basic struct {
 		dirt.InjectingGroup // dirt supports grouping fields to be injected together.
 
@@ -58,8 +56,6 @@ var _ = dirt.ProvideStruct[*worldConfig]()
 
 // components is an app-level bundle to show how a root type can gather some services.
 type components struct {
-	dirt.Injectable
-
 	logger *slog.Logger `dirt:""`
 	api    *api.Service `dirt:""`
 

@@ -9,13 +9,9 @@ import (
 
 func TestInvokeIndividual(t *testing.T) {
 	type ServiceA struct {
-		dirt.Injectable
-
 		Config string
 	}
 	type ServiceB struct {
-		dirt.Injectable
-
 		A *ServiceA `dirt:""`
 	}
 
@@ -39,13 +35,9 @@ func TestInvokeIndividual(t *testing.T) {
 
 func TestInvokeIndividualInner(t *testing.T) {
 	type ServiceA struct {
-		dirt.Injectable
-
 		Config string
 	}
 	type ServiceB struct {
-		dirt.Injectable
-
 		A *ServiceA `dirt:"individual"`
 	}
 
@@ -73,12 +65,10 @@ func TestInvokeIndividualInner(t *testing.T) {
 func TestInvokeAs(t *testing.T) {
 	type iFace interface{ Foo() }
 	type ServiceA struct {
-		dirt.Injectable
 		iFace
 	}
-	type ServiceB struct{ dirt.Injectable }
+	type ServiceB struct{}
 	type ServiceC struct {
-		dirt.Injectable
 		iFace
 
 		A *ServiceA `dirt:""`

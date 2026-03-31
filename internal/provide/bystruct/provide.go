@@ -73,8 +73,16 @@ type dependency struct {
 // ProvideStruct registers the struct type T to be provided by the container.
 //
 //	The dependencies of T determined by its fields and tags.
-func ProvideStruct[T IInjectable](opt core.Options) {
+func ProvideStruct[T any](opt core.Options) {
 	rty := reflect.TypeFor[T]()
+	concrete := rty
+	for concrete.Kind() == reflect.Pointer {
+		concrete = concrete.Elem()
+	}
+
+	if concrete.Kind() != reflect.Struct {
+		panic(fmt.Sprintf("dirt: ProvideStruct only supports struct types, but got %s", rty.String()))
+	}
 
 	reg := &registration{
 		key: core.TypeNameKey{Type: rty, Name: opt.Name},
@@ -104,8 +112,6 @@ func (reg *registration) markDeps(rty reflect.Type, accessFromRoot func(reflect.
 		sf := rty.Field(i)
 		// Skip Injectable indicator
 		switch sf.Type {
-		case reflect.TypeFor[Injectable]():
-			continue
 		case reflect.TypeFor[Subclass]():
 			continue
 		}

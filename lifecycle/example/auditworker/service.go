@@ -20,8 +20,6 @@ type Config struct {
 
 // Service is a background worker; Run blocks until context cancellation.
 type Service struct {
-	dirt.Injectable
-
 	config  *Config          `dirt:""`
 	billing *billing.Service `dirt:""`
 	logger  *slog.Logger     `dirt:""`

@@ -4,15 +4,6 @@ import (
 	"github.com/h2570su/dirt/internal"
 )
 
-type IInjectable interface {
-	dirtInjectable()
-}
-
-// Injectable is an indicator to be embedded in struct to be provided by ProvideStruct.
-type Injectable struct{ _ internal.Sentinel }
-
-func (Injectable) dirtInjectable() {}
-
 type ISubclass interface {
 	dirtSubclass()
 }

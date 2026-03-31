@@ -27,13 +27,9 @@ type TypeKey[T any] struct{}
 
 func BenchmarkInvoke(b *testing.B) {
 	type ServiceA struct {
-		dirt.Injectable
-
 		Config string
 	}
 	type ServiceB struct {
-		dirt.Injectable
-
 		A *ServiceA `dirt:""`
 	}
 	scope := &dirt.Scope{}
@@ -72,18 +68,12 @@ func BenchmarkInvoke(b *testing.B) {
 
 func BenchmarkInstantiate(b *testing.B) {
 	type ServiceA struct {
-		dirt.Injectable
-
 		Config string
 	}
 	type ServiceB struct {
-		dirt.Injectable
-
 		A *ServiceA `dirt:"individual"`
 	}
 	type ServiceBa struct {
-		dirt.Injectable
-
 		a *ServiceA `dirt:"individual"` //nolint:unused
 	}
 
@@ -127,18 +117,12 @@ func BenchmarkInstantiate(b *testing.B) {
 
 func TestProvideStruct(t *testing.T) {
 	type ServiceA struct {
-		bystruct.Injectable
-
 		Config string
 	}
 	type ServiceAA struct {
-		bystruct.Injectable
-
 		ConfigAnother string
 	}
 	type ServiceB struct {
-		bystruct.Injectable
-
 		A  *ServiceA  `dirt:""`
 		AA *ServiceAA `dirt:""`
 	}
@@ -190,13 +174,9 @@ func TestProvideStruct(t *testing.T) {
 
 func TestProvideStructUnexported(t *testing.T) {
 	type ServiceA struct {
-		bystruct.Injectable
-
 		Config string
 	}
 	type ServiceB struct {
-		bystruct.Injectable
-
 		a *ServiceA `dirt:""`
 	}
 
@@ -218,18 +198,12 @@ func TestProvideStructUnexported(t *testing.T) {
 
 func TestProvideStructNested(t *testing.T) {
 	type ServiceA struct {
-		bystruct.Injectable
-
 		Config string
 	}
 	type ServiceAA struct {
-		bystruct.Injectable
-
 		ConfigAnother string
 	}
 	type ServiceB struct {
-		bystruct.Injectable
-
 		GroupA struct {
 			bystruct.Subclass
 
@@ -264,13 +238,9 @@ func TestProvideStructNested(t *testing.T) {
 
 func TestProvideStructNamed(t *testing.T) {
 	type ServiceA struct {
-		bystruct.Injectable
-
 		Config string
 	}
 	type ServiceB struct {
-		bystruct.Injectable
-
 		AA *ServiceA `dirt:"name:aa"`
 		AB *ServiceA `dirt:"name:ab"`
 	}
@@ -339,8 +309,6 @@ func (h *HookTestErrorMixin) PostInject() error { return errors.New("hook error"
 
 func TestProvideStructWithHook(t *testing.T) {
 	type ServiceA struct {
-		bystruct.Injectable
-
 		HookTestMixin
 	}
 
@@ -375,8 +343,6 @@ func TestProvideStructWithHook(t *testing.T) {
 
 	t.Run("hook error", func(t *testing.T) {
 		type ServiceB struct {
-			bystruct.Injectable
-
 			HookTestErrorMixin
 		}
 		scope := &simple.Scope{}
@@ -394,21 +360,15 @@ func TestProvideStructWithHook(t *testing.T) {
 
 func TestProvideStructOptional(t *testing.T) {
 	type ServiceSuccess struct {
-		bystruct.Injectable
-
 		HookTestMixin
 	}
 
 	type ServiceFail struct {
-		bystruct.Injectable
-
 		HookTestErrorMixin
 	}
 
 	t.Run("optional", func(t *testing.T) {
 		type Service struct {
-			bystruct.Injectable
-
 			Master *ServiceSuccess `dirt:""`
 			Slave  *ServiceFail    `dirt:"optional"`
 		}
@@ -431,8 +391,6 @@ func TestProvideStructOptional(t *testing.T) {
 	})
 	t.Run("optional,reversed", func(t *testing.T) {
 		type Service struct {
-			bystruct.Injectable
-
 			Slave  *ServiceFail    `dirt:"optional"`
 			Master *ServiceSuccess `dirt:""`
 		}
@@ -456,8 +414,6 @@ func TestProvideStructOptional(t *testing.T) {
 	})
 	t.Run("optional,individual", func(t *testing.T) {
 		type Service struct {
-			bystruct.Injectable
-
 			Master *ServiceSuccess `dirt:"individual"`
 			Slave  *ServiceFail    `dirt:"optional,individual"`
 		}
@@ -482,8 +438,6 @@ func TestProvideStructOptional(t *testing.T) {
 	t.Run("optional,one-not-exist", func(t *testing.T) {
 		type ServiceNotExist struct{}
 		type Service struct {
-			bystruct.Injectable
-
 			Master *ServiceSuccess  `dirt:""`
 			Slave  *ServiceNotExist `dirt:"optional"`
 		}
@@ -508,29 +462,19 @@ func TestProvideStructOptional(t *testing.T) {
 
 type (
 	ServiceLoopABAa struct {
-		bystruct.Injectable
-
 		Dep *ServiceLoopABAb `dirt:""`
 	}
 	ServiceLoopABAb struct {
-		bystruct.Injectable
-
 		Dep *ServiceLoopABAa `dirt:""`
 	}
 
 	ServiceLoopABCAa struct {
-		bystruct.Injectable
-
 		Dep *ServiceLoopABCAb `dirt:""`
 	}
 	ServiceLoopABCAb struct {
-		bystruct.Injectable
-
 		Dep *ServiceLoopABCAc `dirt:""`
 	}
 	ServiceLoopABCAc struct {
-		bystruct.Injectable
-
 		Dep *ServiceLoopABCAa `dirt:""`
 	}
 )

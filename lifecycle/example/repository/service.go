@@ -17,8 +17,6 @@ type Config struct {
 }
 
 type Service struct {
-	dirt.Injectable
-
 	config *Config        `dirt:""`
 	cache  *cache.Service `dirt:""`
 	logger *slog.Logger   `dirt:""`

@@ -23,8 +23,6 @@ type Config struct {
 }
 
 type Service struct {
-	dirt.Injectable
-
 	config  *Config             `dirt:""`
 	billing *billing.Service    `dirt:""`
 	repo    *repository.Service `dirt:""`

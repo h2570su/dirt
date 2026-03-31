@@ -16,7 +16,7 @@ var _nope = nope{}
 // ProvideStruct registers the struct type T to be provided by the container.
 //
 //	The dependencies of T determined by its fields and tags.
-func ProvideStruct[T bystruct.IInjectable](opts ...core.Option) nope {
+func ProvideStruct[T any](opts ...core.Option) nope {
 	opt := defaultOptions
 	for _, o := range opts {
 		opt = o(opt)

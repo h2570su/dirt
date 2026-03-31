@@ -26,9 +26,10 @@ So I want to use injection by field as the major way, and ctor is just a supplem
 
 ### Registration API
 
-- `ProvideStruct[T dirt.Injectable](opts ...dirt.Option)`
+- `ProvideStruct[T any](opts ...dirt.Option)`
   - Register an injectable struct type by field analysis.
   - Return a dummy value so you can do `var _ = dirt.ProvideStruct[MyType]()`.
+  - If T is not struct or struct pointer, it will **panic** immediately.
   - Field Tag (`dirt`). Only tagged fields are injected by default.
     - `dirt:"-"`: ignore this field.
     - `dirt:"name:xxx"`: inject dependency by name.
@@ -70,9 +71,7 @@ So I want to use injection by field as the major way, and ctor is just a supplem
 
 ### Struct Indicators & Hook
 
-- `dirt.Injectable`
-  - Embed this in structs intended for `ProvideStruct`.
-- `dirt.Subclass`
+- `dirt.InjectingGroup`
   - Mark nested struct groups for recursive field injection.
 - `dirt.IPostInjectHook`
   - Implement `PostInject() error` to run post-injection initialization.

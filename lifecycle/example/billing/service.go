@@ -21,8 +21,6 @@ type Config struct {
 }
 
 type Service struct {
-	dirt.Injectable
-
 	config   *Config             `dirt:""`
 	repo     *repository.Service `dirt:""`
 	notifier *notifier.Service   `dirt:""`
