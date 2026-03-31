@@ -31,6 +31,9 @@ func parseTag(sf reflect.StructField) tag {
 	if !ok {
 		return tag{}
 	}
+	if raw == "-" {
+		return tag{}
+	}
 	parts := strings.Split(raw, ",")
 	var parsed tag
 	parsed.Valid = true
