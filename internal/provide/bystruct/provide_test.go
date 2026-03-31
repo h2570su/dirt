@@ -205,12 +205,12 @@ func TestProvideStructNested(t *testing.T) {
 	}
 	type ServiceB struct {
 		GroupA struct {
-			bystruct.Subclass
+			bystruct.InjectingGroup
 
 			A *ServiceA `dirt:""`
 		}
 		GroupB *struct {
-			bystruct.Subclass
+			bystruct.InjectingGroup
 
 			AA *ServiceAA `dirt:""`
 		}

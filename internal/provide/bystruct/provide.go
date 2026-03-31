@@ -112,7 +112,7 @@ func (reg *registration) markDeps(rty reflect.Type, accessFromRoot func(reflect.
 		sf := rty.Field(i)
 		// Skip Injectable indicator
 		switch sf.Type {
-		case reflect.TypeFor[Subclass]():
+		case reflect.TypeFor[InjectingGroup]():
 			continue
 		}
 
@@ -130,7 +130,7 @@ func (reg *registration) markDeps(rty reflect.Type, accessFromRoot func(reflect.
 		}
 
 		// Handle subclass dependencies
-		if sf.Type.Implements(reflect.TypeFor[ISubclass]()) {
+		if sf.Type.Implements(reflect.TypeFor[IInjectingGroup]()) {
 			// Handle subclass dependencies
 			reg.markDeps(sf.Type, locateFn)
 			continue
