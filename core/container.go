@@ -6,4 +6,6 @@ type IContainer interface {
 	GetInstance(key TypeNameKey) (val any, ok bool)
 	// WriteInstance inserts/updates the instance of the provided named type into the container
 	WriteInstance(key TypeNameKey, val any)
+	// GetKeyByInstance returns the key of the provided instance, and whether it exists in the container.
+	GetKeyByInstance(val any) (key TypeNameKey, ok bool)
 }

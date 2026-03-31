@@ -48,3 +48,16 @@ func (s *Container) WriteInstance(key core.TypeNameKey, val any) {
 
 	s.instances[key] = val
 }
+
+func (s *Container) GetKeyByInstance(val any) (core.TypeNameKey, bool) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	for k, v := range s.instances {
+		if v == val {
+			return k, true
+		}
+	}
+
+	return core.TypeNameKey{}, false
+}
