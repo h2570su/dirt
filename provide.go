@@ -16,6 +16,8 @@ var _nope = nope{}
 // ProvideStruct registers the struct type T to be provided by the container.
 //
 //	The dependencies of T determined by its fields and tags.
+//
+// If T implements PostInject() / PostInject() error, it will be called after the dependencies are injected.
 func ProvideStruct[T any](opts ...core.Option) nope {
 	opt := defaultOptions
 	for _, o := range opts {
@@ -32,6 +34,8 @@ func ProvideStruct[T any](opts ...core.Option) nope {
 //	- func([more args,]) (T, ~error)
 //
 // variadic arg will be ignored
+//
+// If T implements PostInject() / PostInject() error, it will be called after the dependencies are injected.
 func ProvideCtor(fn any, opts ...core.Option) nope {
 	opt := defaultOptions
 	for _, o := range opts {
@@ -42,6 +46,8 @@ func ProvideCtor(fn any, opts ...core.Option) nope {
 }
 
 // ProvideValue registers the value prototype of the target type
+//
+// If T implements PostInject() / PostInject() error, it will be called after the dependencies are injected.
 func ProvideValue[T any](value T, opts ...core.Option) nope {
 	opt := defaultOptions
 	for _, o := range opts {

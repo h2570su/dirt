@@ -195,7 +195,7 @@ func (h *HookTestStub) PostInject() error {
 
 func TestProvideStructWithHook(t *testing.T) {
 	t.Run("*T hook", func(t *testing.T) {
-		var _ hook.IPostInjectHook = (*HookTestStub)(nil) // Ensure *HookTestStub implements IPostInjectHook
+		var _ hook.IPostInjectHookE = (*HookTestStub)(nil) // Ensure *HookTestStub implements IPostInjectHook
 		scope := simple.NewScope()
 		ins := HookTestStub("")
 		byvalue.ProvideValue(&ins, opt(dirt.Scoped(scope)))

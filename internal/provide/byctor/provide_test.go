@@ -253,7 +253,7 @@ func TestProvideStructWithHook(t *testing.T) {
 	}
 
 	t.Run("*T hook", func(t *testing.T) {
-		var _ hook.IPostInjectHook = (*ServiceA)(nil) // Ensure *ServiceA implements IPostInjectHook
+		var _ hook.IPostInjectHookE = (*ServiceA)(nil) // Ensure *ServiceA implements IPostInjectHook
 		scope := simple.NewScope()
 		byctor.ProvideCtor(func() *ServiceA { return &ServiceA{} }, opt(core.Scoped(scope)))
 
