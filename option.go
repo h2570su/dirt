@@ -7,7 +7,7 @@ type (
 	Option  = core.Option
 )
 
-var defaultOptions = Options{Scope: globalScope}
+var defaultOptions = Options{Scope: globalScope, CheckInjectableMissingTagOnInvoke: true}
 
 // Named specifies the name of the provided instance, which is used to distinguish different instances of the same type. By default, the name is empty string.
 func Named(name string) Option { return core.Named(name) }
