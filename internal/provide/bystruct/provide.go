@@ -15,6 +15,8 @@ type registration struct {
 
 	dependencies []*dependency
 	nestCtors    []func(root reflect.Value)
+
+	checkInjectableMissingTagOnInvoke bool
 }
 
 func (reg *registration) Key() core.TypeNameKey { return reg.key }
@@ -86,6 +88,8 @@ func ProvideStruct[T any](opt core.Options) {
 
 	reg := &registration{
 		key: core.TypeNameKey{Type: rty, Name: opt.Name},
+
+		checkInjectableMissingTagOnInvoke: opt.CheckInjectableMissingTagOnInvoke,
 	}
 
 	reg.markDeps(rty, func(v reflect.Value) reflect.Value {
@@ -252,6 +256,9 @@ func (reg *registration) buildCtorWithHook() {
 	current := reg.ctor
 
 	current = hook.CheckAppendPostInjectHookCtor(t, current)
+	if reg.checkInjectableMissingTagOnInvoke {
+		current = checkPotentialInjectableMissingTag(t, current)
+	}
 
 	reg.ctor = current
 }

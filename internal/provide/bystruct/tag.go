@@ -21,6 +21,7 @@ const (
 type tag struct {
 	Valid bool // Inversion of ignoring the field.
 
+	Ignored    bool
 	Name       string
 	Optional   bool
 	Individual bool
@@ -32,7 +33,7 @@ func parseTag(sf reflect.StructField) tag {
 		return tag{}
 	}
 	if raw == "-" {
-		return tag{}
+		return tag{Ignored: true}
 	}
 	parts := strings.Split(raw, ",")
 	var parsed tag

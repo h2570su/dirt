@@ -514,3 +514,58 @@ func TestProvideStructLoop(t *testing.T) {
 		bystruct.ProvideStruct[*ServiceLoopABCAa](opt(core.Scoped(scope)))
 	})
 }
+
+func TestProvideStructPotentialMissingTag(t *testing.T) {
+	type ServiceA struct {
+		Config string
+	}
+	type ServiceAA struct {
+		ConfigAnother string
+	}
+	type ServiceB struct {
+		A  *ServiceA `dirt:""`
+		AA *ServiceAA
+	}
+
+	t.Run("potential missing tag, checked", func(t *testing.T) {
+		scope := simple.NewScope()
+		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope), core.CheckInjectableMissingTagOnInvoke(true)))
+		bystruct.ProvideStruct[*ServiceAA](opt(core.Scoped(scope), core.CheckInjectableMissingTagOnInvoke(true)))
+		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope), core.CheckInjectableMissingTagOnInvoke(true)))
+
+		_, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceB]()})
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+	})
+	t.Run("potential missing tag, not checked", func(t *testing.T) {
+		scope := simple.NewScope()
+		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope)))
+		bystruct.ProvideStruct[*ServiceAA](opt(core.Scoped(scope)))
+		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope)))
+
+		_b, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceB]()})
+		if err != nil {
+			t.Fatal(err)
+		}
+		b, _ := _b.(*ServiceB)
+		if b.AA != nil {
+			t.Fatal("expected nil ServiceB.AA but got non-nil")
+		}
+	})
+	t.Run("potential missing tag, acknowledged", func(t *testing.T) {
+		type ServiceB struct {
+			A  *ServiceA  `dirt:""`
+			AA *ServiceAA `dirt:"-"`
+		}
+		scope := simple.NewScope()
+		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope), core.CheckInjectableMissingTagOnInvoke(true)))
+		bystruct.ProvideStruct[*ServiceAA](opt(core.Scoped(scope), core.CheckInjectableMissingTagOnInvoke(true)))
+		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope), core.CheckInjectableMissingTagOnInvoke(true)))
+
+		_, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceB]()})
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+}
