@@ -1,6 +1,9 @@
 package core
 
-import "reflect"
+import (
+	"reflect"
+	"strings"
+)
 
 // TypeNameKey is the key type for accessing instance/registration
 type TypeNameKey struct {
@@ -12,8 +15,13 @@ func (k TypeNameKey) String() string {
 	if k.Type == nil {
 		return "<invalid>"
 	}
-	if k.Name == "" {
-		return k.Type.String()
+	sb := strings.Builder{}
+	sb.WriteString(k.Type.String())
+	if k.Type.PkgPath() != "" {
+		sb.WriteString("{" + k.Type.PkgPath() + "}")
 	}
-	return k.Type.String() + "(" + k.Name + ")"
+	if k.Name != "" {
+		sb.WriteString("(" + k.Name + ")")
+	}
+	return sb.String()
 }

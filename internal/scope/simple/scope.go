@@ -31,7 +31,7 @@ func (s *Scope) Instantiate(key core.TypeNameKey) (any, error) {
 
 	ins, err := reg.Ctor(s)
 	if err != nil {
-		return nil, fmt.Errorf("dirt: failed to instantiate type: `%s`, error: %w", key.Type.String(), err)
+		return nil, fmt.Errorf("dirt: failed to instantiate type: `%s`, error: \n%w", key.Type.String(), err)
 	}
 	return ins.Interface(), nil
 }
@@ -55,7 +55,7 @@ func (s *Scope) InvokeInstance(key core.TypeNameKey) (any, error) {
 
 	ins, err := reg.Ctor(s)
 	if err != nil {
-		return nil, fmt.Errorf("dirt: failed to instantiate type: `%s`, error: %w", key.Type.String(), err)
+		return nil, fmt.Errorf("dirt: failed to instantiate type: `%s`, error: \n%w", key.Type.String(), err)
 	}
 
 	anyIns := ins.Interface()
