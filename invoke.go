@@ -69,10 +69,12 @@ func InvokeAs[T any](opts ...Option) (T, error) {
 	s := opt.Scope
 
 	for v, err := range s.InvokeInstanceAsMany(key) {
+		if err != nil {
+			return *new(T), err
+		}
 		typed, ok := v.(T)
 		if !ok {
-			return *new(T),
-				fmt.Errorf("dirt: instance type: `%T` does not match the requested type: `%s`, this should not happen", v, key.Type.String())
+			err = fmt.Errorf("dirt: instance type: `%T` does not match the requested type: `%s`, this should not happen", v, key.Type.String())
 		}
 		return typed, err
 	}
@@ -92,11 +94,15 @@ func InvokeAsMany[T any](opts ...Option) iter.Seq2[T, error] {
 
 	return func(yield func(T, error) bool) {
 		for v, err := range s.InvokeInstanceAsMany(key) {
-			typed, ok := v.(T)
-			if !ok {
-				if !yield(*new(T), fmt.Errorf("dirt: instance type: `%T` does not match the requested type: `%s`, this should not happen", v, key.Type.String())) {
+			if err != nil {
+				if !yield(*new(T), err) {
 					return
 				}
+				continue
+			}
+			typed, ok := v.(T)
+			if !ok {
+				err = fmt.Errorf("dirt: instance type: `%T` does not match the requested type: `%s`, this should not happen", v, key.Type.String())
 			}
 			if !yield(typed, err) {
 				return
