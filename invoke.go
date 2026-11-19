@@ -68,6 +68,13 @@ func InvokeAs[T any](opts ...Option) (T, error) {
 	key := typeNameKey{Type: reflect.TypeFor[T](), Name: opt.Name}
 	s := opt.Scope
 
+	if key.Type.Kind() != reflect.Interface {
+		return *new(T), fmt.Errorf(
+			"InvokeAs requires an interface type, got %s",
+			key.Type,
+		)
+	}
+
 	for v, err := range s.InvokeInstanceAsMany(key) {
 		if err != nil {
 			return *new(T), err
@@ -91,6 +98,14 @@ func InvokeAsMany[T any](opts ...Option) iter.Seq2[T, error] {
 
 	key := typeNameKey{Type: reflect.TypeFor[T](), Name: opt.Name}
 	s := opt.Scope
+
+	if key.Type.Kind() != reflect.Interface {
+		return func(yield func(T, error) bool) {
+			if !yield(*new(T), fmt.Errorf("InvokeAsMany requires an interface type, got %s", key.Type)) {
+				return
+			}
+		}
+	}
 
 	return func(yield func(T, error) bool) {
 		for v, err := range s.InvokeInstanceAsMany(key) {
