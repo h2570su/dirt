@@ -100,7 +100,9 @@ func (s *Scope) InvokeInstanceAsMany(key core.TypeNameKey) iter.Seq2[any, error]
 				}
 				continue
 			}
-			if !yield(ins.Interface(), nil) {
+			val := ins.Interface()
+			s.WriteInstance(reg.Key(), val)
+			if !yield(val, nil) {
 				return
 			}
 		}
