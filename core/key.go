@@ -18,10 +18,14 @@ func (k TypeNameKey) String() string {
 	sb := strings.Builder{}
 	sb.WriteString(k.Type.String())
 	if k.Type.PkgPath() != "" {
-		sb.WriteString("{" + k.Type.PkgPath() + "}")
+		sb.WriteString("{")
+		sb.WriteString(k.Type.PkgPath())
+		sb.WriteString("}")
 	}
 	if k.Name != "" {
-		sb.WriteString("(" + k.Name + ")")
+		sb.WriteString("(")
+		sb.WriteString(k.Name)
+		sb.WriteString(")")
 	}
 	return sb.String()
 }

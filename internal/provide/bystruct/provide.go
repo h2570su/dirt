@@ -83,7 +83,7 @@ func ProvideStruct[T any](opt core.Options) {
 	}
 
 	if concrete.Kind() != reflect.Struct {
-		panic(fmt.Sprintf("dirt: ProvideStruct only supports struct types, but got %s", rty.String()))
+		panic("dirt: ProvideStruct only supports struct types, but got " + rty.String())
 	}
 
 	reg := &registration{
@@ -115,8 +115,7 @@ func (reg *registration) markDeps(rty reflect.Type, accessFromRoot func(reflect.
 	for i := range rty.NumField() {
 		sf := rty.Field(i)
 		// Skip Injectable indicator
-		switch sf.Type {
-		case reflect.TypeFor[InjectingGroup]():
+		if sf.Type == reflect.TypeFor[InjectingGroup]() {
 			continue
 		}
 
