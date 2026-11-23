@@ -18,14 +18,8 @@ type Scope struct {
 func NewScope() *Scope { return &Scope{IRegistry: &Registry{}, IContainer: &Container{}} }
 
 func (s *Scope) Instantiate(key core.TypeNameKey) (any, error) {
-	var reg core.Registration
-	for _reg := range s.IterRegistration() {
-		if _reg.Key() == key {
-			reg = _reg
-			break
-		}
-	}
-	if reg == nil {
+	reg, ok := s.GetRegistration(key)
+	if !ok {
 		return nil, fmt.Errorf("dirt: no provider found for type %s", key.Type.String())
 	}
 
@@ -37,14 +31,8 @@ func (s *Scope) Instantiate(key core.TypeNameKey) (any, error) {
 }
 
 func (s *Scope) InvokeInstance(key core.TypeNameKey) (any, error) {
-	var reg core.Registration
-	for _reg := range s.IterRegistration() {
-		if _reg.Key() == key {
-			reg = _reg
-			break
-		}
-	}
-	if reg == nil {
+	reg, ok := s.GetRegistration(key)
+	if !ok {
 		return nil, fmt.Errorf("dirt: no provider found for type %s", key.Type.String())
 	}
 
