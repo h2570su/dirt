@@ -98,8 +98,8 @@ func (s *Scope) InvokeInstanceAsMany(key core.TypeNameKey) iter.Seq2[any, error]
 			}
 			val := ins.Interface()
 			s.WriteInstance(concreteKey, val)
+			returned[concreteKey] = struct{}{}
 			if !yield(val, nil) {
-				returned[concreteKey] = struct{}{}
 				return
 			}
 		}
