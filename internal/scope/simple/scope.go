@@ -53,6 +53,15 @@ func (s *Scope) InvokeInstance(key core.TypeNameKey) (any, error) {
 		return nil, fmt.Errorf("dirt: no provider found for type %s", key.Type.String())
 	}
 
+	concreteKey := reg.Key()
+	if a, ok := reg.(core.RegistrationAlias); ok {
+		concreteKey = a.AliasOf()
+		if val, ok := s.GetInstance(concreteKey); ok {
+			s.WriteInstance(reg.Key(), val)
+			return val, nil
+		}
+	}
+
 	ins, err := reg.Ctor(s)
 	if err != nil {
 		return nil, fmt.Errorf("dirt: failed to instantiate type: `%s`, error: \n%w", key.Type.String(), err)
@@ -60,6 +69,7 @@ func (s *Scope) InvokeInstance(key core.TypeNameKey) (any, error) {
 
 	anyIns := ins.Interface()
 	s.WriteInstance(reg.Key(), anyIns)
+	s.WriteInstance(concreteKey, anyIns)
 	return anyIns, nil
 }
 

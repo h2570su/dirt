@@ -163,3 +163,68 @@ func TestInvokeAsWithProvideAs(t *testing.T) {
 		t.Fatal("got unexpected sequence of iFace")
 	}
 }
+
+func TestInvokeProvideAsCacheConsistency(t *testing.T) {
+	type iFace interface{ Foo() }
+
+	type ServiceA struct {
+		iFace `dirt:"-"`
+	}
+
+	for _, tc := range []struct {
+		name       string
+		aliasFirst bool
+	}{
+		{"alias-first", true},
+		{"concrete-first", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			scope := simple.NewScope()
+
+			dirt.ProvideAs[*ServiceA, iFace](dirt.Scoped(scope))
+			dirt.ProvideStruct[*ServiceA](dirt.Scoped(scope))
+
+			getAlias := func() iFace {
+				v, err := dirt.Invoke[iFace](dirt.Scoped(scope))
+				if err != nil {
+					t.Fatal(err)
+				}
+				return v
+			}
+
+			getConcrete := func() *ServiceA {
+				v, err := dirt.Invoke[*ServiceA](dirt.Scoped(scope))
+				if err != nil {
+					t.Fatal(err)
+				}
+				return v
+			}
+
+			var alias iFace
+			var concrete *ServiceA
+
+			if tc.aliasFirst {
+				alias = getAlias()
+				concrete = getConcrete()
+			} else {
+				concrete = getConcrete()
+				alias = getAlias()
+			}
+
+			if alias != concrete {
+				t.Fatalf(
+					"alias and concrete should share the same instance: alias=%p, concrete=%p",
+					alias, concrete,
+				)
+			}
+
+			if got := getAlias(); got != alias {
+				t.Fatal("alias instance cache is inconsistent")
+			}
+
+			if got := getConcrete(); got != concrete {
+				t.Fatal("concrete instance cache is inconsistent")
+			}
+		})
+	}
+}
