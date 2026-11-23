@@ -37,10 +37,6 @@ func (s *Scope) Instantiate(key core.TypeNameKey) (any, error) {
 }
 
 func (s *Scope) InvokeInstance(key core.TypeNameKey) (any, error) {
-	if val, ok := s.GetInstance(key); ok {
-		return val, nil
-	}
-
 	var reg core.Registration
 	for _reg := range s.IterRegistration() {
 		if _reg.Key() == key {
@@ -48,18 +44,16 @@ func (s *Scope) InvokeInstance(key core.TypeNameKey) (any, error) {
 			break
 		}
 	}
-
 	if reg == nil {
 		return nil, fmt.Errorf("dirt: no provider found for type %s", key.Type.String())
 	}
 
-	concreteKey := reg.Key()
 	if a, ok := reg.(core.RegistrationAlias); ok {
-		concreteKey = a.AliasOf()
-		if val, ok := s.GetInstance(concreteKey); ok {
-			s.WriteInstance(reg.Key(), val)
-			return val, nil
-		}
+		return s.InvokeInstance(a.AliasOf())
+	}
+
+	if val, ok := s.GetInstance(key); ok {
+		return val, nil
 	}
 
 	ins, err := reg.Ctor(s)
@@ -69,7 +63,6 @@ func (s *Scope) InvokeInstance(key core.TypeNameKey) (any, error) {
 
 	anyIns := ins.Interface()
 	s.WriteInstance(reg.Key(), anyIns)
-	s.WriteInstance(concreteKey, anyIns)
 	return anyIns, nil
 }
 
