@@ -27,7 +27,7 @@ type tag struct {
 	Individual bool
 }
 
-func parseTag(sf reflect.StructField) tag {
+func ParseTag(sf reflect.StructField) tag {
 	raw, ok := sf.Tag.Lookup(tagDirt)
 	if !ok {
 		return tag{}

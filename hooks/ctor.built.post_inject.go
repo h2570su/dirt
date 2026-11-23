@@ -1,4 +1,4 @@
-package hook
+package hooks
 
 import (
 	"fmt"
@@ -8,22 +8,18 @@ import (
 )
 
 type (
-	// IPostInjectHookE is an interface that can be implemented by types that want to do post-injection initialization.
-	IPostInjectHookE interface {
-		PostInject() error
-	}
-	// IPostInjectHook is an interface that can be implemented by types that want to do post-injection initialization.
-	IPostInjectHook interface {
-		PostInject()
-	}
+	// PostInjectable is an interface that can be implemented by types that want to do post-injection initialization.
+	PostInjectable interface{ PostInject() }
+	// PostInjectableE is an interface that can be implemented by types that want to do post-injection initialization.
+	PostInjectableE interface{ PostInject() error }
 )
 
 var rtyPostInjectHooks = []reflect.Type{
-	reflect.TypeFor[IPostInjectHookE](),
-	reflect.TypeFor[IPostInjectHook](),
+	reflect.TypeFor[PostInjectableE](),
+	reflect.TypeFor[PostInjectable](),
 }
 
-func CheckAppendPostInjectHookCtor(t reflect.Type, ctor core.Ctor) core.Ctor {
+func HookCheckAppendPostInject(t reflect.Type, ctor core.Ctor) core.Ctor {
 	// If neither T nor *T implements IPostInjectHook, return as is
 	var transform func(reflect.Value) reflect.Value
 	for _, hookType := range rtyPostInjectHooks {
@@ -42,9 +38,9 @@ func CheckAppendPostInjectHookCtor(t reflect.Type, ctor core.Ctor) core.Ctor {
 		}
 		transformed := transform(instance).Interface()
 		switch hook := transformed.(type) {
-		case IPostInjectHook:
+		case PostInjectable:
 			hook.PostInject()
-		case IPostInjectHookE:
+		case PostInjectableE:
 			if err := hook.PostInject(); err != nil {
 				return reflect.Value{}, fmt.Errorf("PostInject hook error: %w", err)
 			}

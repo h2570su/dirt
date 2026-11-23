@@ -19,6 +19,8 @@ type IRegistry interface {
 	// GetDependencies returns the dependencies of the provided named type, closer first.
 	//	Returns an error if the provided named type is not registered in the registry.
 	GetDependencies(key TypeNameKey) ([]TypeNameKey, error)
+
+	IHooks
 }
 
 // Registration represents the registration of a provided named type

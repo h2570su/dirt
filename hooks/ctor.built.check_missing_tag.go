@@ -1,13 +1,14 @@
-package bystruct
+package hooks
 
 import (
 	"fmt"
 	"reflect"
 
 	"github.com/h2570su/dirt/core"
+	"github.com/h2570su/dirt/internal/provide/bystruct"
 )
 
-func checkPotentialInjectableMissingTag(_ reflect.Type, ctor core.Ctor) core.Ctor {
+func CheckPotentialInjectableMissingTag(_ reflect.Type, ctor core.Ctor) core.Ctor {
 	return func(s core.IScope) (reflect.Value, error) {
 		// Call the original constructor to get the instance
 		ctorValue, err := ctor(s)
@@ -41,7 +42,7 @@ func checkPotentialInjectableMissingTag(_ reflect.Type, ctor core.Ctor) core.Cto
 				}
 
 				// If the field is found in the registry, check if it has the injectable tag
-				t := parseTag(fieldT)
+				t := bystruct.ParseTag(fieldT)
 				if !t.Valid && !t.Ignored {
 					return reflect.Value{}, fmt.Errorf("field %s in struct %s is not initialized but injectable by dirt, consider adding the `dirt:\"\"` tag. If is expected to be manually initialized, adding the `dirt:\"-\"` tag", fieldT.Name, rty.String())
 				}

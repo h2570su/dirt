@@ -10,7 +10,7 @@ import (
 
 	"github.com/h2570su/dirt"
 	"github.com/h2570su/dirt/core"
-	"github.com/h2570su/dirt/internal/hook"
+	"github.com/h2570su/dirt/hooks"
 	"github.com/h2570su/dirt/internal/provide/byctor"
 	"github.com/h2570su/dirt/internal/scope/simple"
 )
@@ -253,8 +253,10 @@ func TestProvideStructWithHook(t *testing.T) {
 	}
 
 	t.Run("*T hook", func(t *testing.T) {
-		var _ hook.IPostInjectHookE = (*ServiceA)(nil) // Ensure *ServiceA implements IPostInjectHook
+		var _ hooks.PostInjectableE = (*ServiceA)(nil) // Ensure *ServiceA implements IPostInjectHook
 		scope := simple.NewScope()
+		scope.HookOnCtorBuilt(hooks.HookCheckAppendPostInject)
+		scope.HookOnCtorBuilt(hooks.CheckPotentialInjectableMissingTag)
 		byctor.ProvideCtor(func() *ServiceA { return &ServiceA{} }, opt(core.Scoped(scope)))
 
 		_a, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceA]()})
@@ -268,6 +270,8 @@ func TestProvideStructWithHook(t *testing.T) {
 	})
 	t.Run("T hook", func(t *testing.T) {
 		scope := simple.NewScope()
+		scope.HookOnCtorBuilt(hooks.HookCheckAppendPostInject)
+		scope.HookOnCtorBuilt(hooks.CheckPotentialInjectableMissingTag)
 		byctor.ProvideCtor(func() *ServiceA { return &ServiceA{} }, opt(core.Scoped(scope)))
 
 		_a, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceA]()})
@@ -286,6 +290,8 @@ func TestProvideStructWithHook(t *testing.T) {
 			HookTestErrorMixin
 		}
 		scope := simple.NewScope()
+		scope.HookOnCtorBuilt(hooks.HookCheckAppendPostInject)
+		scope.HookOnCtorBuilt(hooks.CheckPotentialInjectableMissingTag)
 		byctor.ProvideCtor(func() *ServiceB { return &ServiceB{} }, opt(core.Scoped(scope)))
 
 		_, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceB]()})

@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/h2570su/dirt/core"
-	"github.com/h2570su/dirt/internal/hook"
 )
 
 type registration struct {
@@ -141,7 +140,7 @@ func (reg *registration) ResolveDependencies(s core.IRegistry) {
 		return
 	}
 	reg.buildCtor()
-	reg.buildCtorWithHook()
+	reg.ctor = s.OnCtorBuilt(reg.key.Type, reg.ctor)
 }
 
 func (reg *registration) Ctor(s core.IScope) (reflect.Value, error) {
@@ -197,13 +196,4 @@ func (reg *registration) buildCtor() {
 		}
 		return got[0], nil
 	}
-}
-
-func (reg *registration) buildCtorWithHook() {
-	t := reg.key.Type
-	current := reg.ctor
-
-	current = hook.CheckAppendPostInjectHookCtor(t, current)
-
-	reg.ctor = current
 }

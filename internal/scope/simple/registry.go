@@ -10,6 +10,8 @@ import (
 )
 
 type Registry struct {
+	Hooks
+
 	lock          sync.RWMutex
 	registrations []core.Registration
 }

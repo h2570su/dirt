@@ -10,7 +10,7 @@ import (
 
 	"github.com/h2570su/dirt"
 	"github.com/h2570su/dirt/core"
-	"github.com/h2570su/dirt/internal/hook"
+	"github.com/h2570su/dirt/hooks"
 	"github.com/h2570su/dirt/internal/provide/bystruct"
 	"github.com/h2570su/dirt/internal/scope/simple"
 )
@@ -313,8 +313,10 @@ func TestProvideStructWithHook(t *testing.T) {
 	}
 
 	t.Run("*T hook", func(t *testing.T) {
-		var _ hook.IPostInjectHookE = (*ServiceA)(nil) // Ensure *ServiceA implements IPostInjectHook
+		var _ hooks.PostInjectableE = (*ServiceA)(nil) // Ensure *ServiceA implements IPostInjectHook
 		scope := simple.NewScope()
+		scope.HookOnCtorBuilt(hooks.HookCheckAppendPostInject)
+		scope.HookOnCtorBuilt(hooks.CheckPotentialInjectableMissingTag)
 		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope)))
 
 		_a, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceA]()})
@@ -328,6 +330,8 @@ func TestProvideStructWithHook(t *testing.T) {
 	})
 	t.Run("T hook", func(t *testing.T) {
 		scope := simple.NewScope()
+		scope.HookOnCtorBuilt(hooks.HookCheckAppendPostInject)
+		scope.HookOnCtorBuilt(hooks.CheckPotentialInjectableMissingTag)
 		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope)))
 
 		_a, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceA]()})
@@ -346,6 +350,8 @@ func TestProvideStructWithHook(t *testing.T) {
 			HookTestErrorMixin
 		}
 		scope := simple.NewScope()
+		scope.HookOnCtorBuilt(hooks.HookCheckAppendPostInject)
+		scope.HookOnCtorBuilt(hooks.CheckPotentialInjectableMissingTag)
 		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope)))
 
 		_, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceB]()})
@@ -373,6 +379,8 @@ func TestProvideStructOptional(t *testing.T) {
 			Slave  *ServiceFail    `dirt:"optional"`
 		}
 		scope := simple.NewScope()
+		scope.HookOnCtorBuilt(hooks.HookCheckAppendPostInject)
+		scope.HookOnCtorBuilt(hooks.CheckPotentialInjectableMissingTag)
 		bystruct.ProvideStruct[*ServiceSuccess](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceFail](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*Service](opt(core.Scoped(scope)))
@@ -395,6 +403,8 @@ func TestProvideStructOptional(t *testing.T) {
 			Master *ServiceSuccess `dirt:""`
 		}
 		scope := simple.NewScope()
+		scope.HookOnCtorBuilt(hooks.HookCheckAppendPostInject)
+		scope.HookOnCtorBuilt(hooks.CheckPotentialInjectableMissingTag)
 		bystruct.ProvideStruct[*ServiceSuccess](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceFail](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*Service](opt(core.Scoped(scope)))
@@ -418,6 +428,9 @@ func TestProvideStructOptional(t *testing.T) {
 			Slave  *ServiceFail    `dirt:"optional,individual"`
 		}
 		scope := simple.NewScope()
+		scope.HookOnCtorBuilt(hooks.HookCheckAppendPostInject)
+		scope.HookOnCtorBuilt(hooks.CheckPotentialInjectableMissingTag)
+
 		bystruct.ProvideStruct[*ServiceSuccess](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*ServiceFail](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*Service](opt(core.Scoped(scope)))
@@ -442,6 +455,8 @@ func TestProvideStructOptional(t *testing.T) {
 			Slave  *ServiceNotExist `dirt:"optional"`
 		}
 		scope := simple.NewScope()
+		scope.HookOnCtorBuilt(hooks.HookCheckAppendPostInject)
+		scope.HookOnCtorBuilt(hooks.CheckPotentialInjectableMissingTag)
 		bystruct.ProvideStruct[*ServiceSuccess](opt(core.Scoped(scope)))
 		bystruct.ProvideStruct[*Service](opt(core.Scoped(scope)))
 
@@ -529,9 +544,11 @@ func TestProvideStructPotentialMissingTag(t *testing.T) {
 
 	t.Run("potential missing tag, checked", func(t *testing.T) {
 		scope := simple.NewScope()
-		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope), core.CheckInjectableMissingTagOnInvoke(true)))
-		bystruct.ProvideStruct[*ServiceAA](opt(core.Scoped(scope), core.CheckInjectableMissingTagOnInvoke(true)))
-		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope), core.CheckInjectableMissingTagOnInvoke(true)))
+		scope.HookOnCtorBuilt(hooks.HookCheckAppendPostInject)
+		scope.HookOnCtorBuilt(hooks.CheckPotentialInjectableMissingTag)
+		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope)))
+		bystruct.ProvideStruct[*ServiceAA](opt(core.Scoped(scope)))
+		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope)))
 
 		_, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceB]()})
 		if err == nil {
@@ -559,9 +576,11 @@ func TestProvideStructPotentialMissingTag(t *testing.T) {
 			AA *ServiceAA `dirt:"-"`
 		}
 		scope := simple.NewScope()
-		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope), core.CheckInjectableMissingTagOnInvoke(true)))
-		bystruct.ProvideStruct[*ServiceAA](opt(core.Scoped(scope), core.CheckInjectableMissingTagOnInvoke(true)))
-		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope), core.CheckInjectableMissingTagOnInvoke(true)))
+		scope.HookOnCtorBuilt(hooks.HookCheckAppendPostInject)
+		scope.HookOnCtorBuilt(hooks.CheckPotentialInjectableMissingTag)
+		bystruct.ProvideStruct[*ServiceA](opt(core.Scoped(scope)))
+		bystruct.ProvideStruct[*ServiceAA](opt(core.Scoped(scope)))
+		bystruct.ProvideStruct[*ServiceB](opt(core.Scoped(scope)))
 
 		_, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*ServiceB]()})
 		if err != nil {

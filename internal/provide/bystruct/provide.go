@@ -5,7 +5,6 @@ import (
 	"reflect"
 
 	"github.com/h2570su/dirt/core"
-	"github.com/h2570su/dirt/internal/hook"
 )
 
 type registration struct {
@@ -15,8 +14,6 @@ type registration struct {
 
 	dependencies []*dependency
 	nestCtors    []func(root reflect.Value)
-
-	checkInjectableMissingTagOnInvoke bool
 }
 
 func (reg *registration) Key() core.TypeNameKey { return reg.key }
@@ -88,8 +85,6 @@ func ProvideStruct[T any](opt core.Options) {
 
 	reg := &registration{
 		key: core.TypeNameKey{Type: rty, Name: opt.Name},
-
-		checkInjectableMissingTagOnInvoke: opt.CheckInjectableMissingTagOnInvoke,
 	}
 
 	reg.markDeps(rty, func(v reflect.Value) reflect.Value {
@@ -140,7 +135,7 @@ func (reg *registration) markDeps(rty reflect.Type, accessFromRoot func(reflect.
 		}
 
 		// Handle normal fields
-		tag := parseTag(sf)
+		tag := ParseTag(sf)
 		if !tag.Valid {
 			continue
 		}
@@ -185,7 +180,7 @@ func (reg *registration) ResolveDependencies(s core.IRegistry) {
 		return
 	}
 	reg.buildCtor()
-	reg.buildCtorWithHook()
+	reg.ctor = s.OnCtorBuilt(reg.key.Type, reg.ctor)
 }
 
 func (reg *registration) Ctor(s core.IScope) (reflect.Value, error) {
@@ -248,16 +243,4 @@ func (reg *registration) buildCtor() {
 		}
 		return instance, nil
 	}
-}
-
-func (reg *registration) buildCtorWithHook() {
-	t := reg.key.Type
-	current := reg.ctor
-
-	current = hook.CheckAppendPostInjectHookCtor(t, current)
-	if reg.checkInjectableMissingTagOnInvoke {
-		current = checkPotentialInjectableMissingTag(t, current)
-	}
-
-	reg.ctor = current
 }

@@ -9,7 +9,7 @@ import (
 
 	"github.com/h2570su/dirt"
 	"github.com/h2570su/dirt/core"
-	"github.com/h2570su/dirt/internal/hook"
+	"github.com/h2570su/dirt/hooks"
 	"github.com/h2570su/dirt/internal/provide/byvalue"
 	"github.com/h2570su/dirt/internal/scope/simple"
 )
@@ -195,9 +195,11 @@ func (h *HookTestStub) PostInject() error {
 
 func TestProvideStructWithHook(t *testing.T) {
 	t.Run("*T hook", func(t *testing.T) {
-		var _ hook.IPostInjectHookE = (*HookTestStub)(nil) // Ensure *HookTestStub implements IPostInjectHook
+		var _ hooks.PostInjectableE = (*HookTestStub)(nil) // Ensure *HookTestStub implements IPostInjectHook
 		scope := simple.NewScope()
 		ins := HookTestStub("")
+		scope.HookOnCtorBuilt(hooks.HookCheckAppendPostInject)
+		scope.HookOnCtorBuilt(hooks.CheckPotentialInjectableMissingTag)
 		byvalue.ProvideValue(&ins, opt(dirt.Scoped(scope)))
 
 		_a, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*HookTestStub]()})
@@ -212,6 +214,8 @@ func TestProvideStructWithHook(t *testing.T) {
 	t.Run("T hook", func(t *testing.T) {
 		scope := simple.NewScope()
 		ins := HookTestStub("")
+		scope.HookOnCtorBuilt(hooks.HookCheckAppendPostInject)
+		scope.HookOnCtorBuilt(hooks.CheckPotentialInjectableMissingTag)
 		byvalue.ProvideValue(ins, opt(dirt.Scoped(scope)))
 
 		_a, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[HookTestStub]()})
@@ -227,6 +231,8 @@ func TestProvideStructWithHook(t *testing.T) {
 	t.Run("hook error", func(t *testing.T) {
 		scope := simple.NewScope()
 		ins := HookTestStub("error")
+		scope.HookOnCtorBuilt(hooks.HookCheckAppendPostInject)
+		scope.HookOnCtorBuilt(hooks.CheckPotentialInjectableMissingTag)
 		byvalue.ProvideValue(&ins, opt(dirt.Scoped(scope)))
 
 		_, err := scope.InvokeInstance(core.TypeNameKey{Type: reflect.TypeFor[*HookTestStub]()})

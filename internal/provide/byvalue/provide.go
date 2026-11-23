@@ -4,7 +4,6 @@ import (
 	"reflect"
 
 	"github.com/h2570su/dirt/core"
-	"github.com/h2570su/dirt/internal/hook"
 )
 
 type registration struct {
@@ -32,7 +31,7 @@ func ProvideValue[T any](value T, opt core.Options) {
 		value: copyV,
 	}
 	reg.buildCtor()
-	reg.buildCtorWithHook()
+	reg.ctor = opt.Scope.OnCtorBuilt(rty, reg.ctor)
 
 	s := opt.Scope
 	s.WriteRegistration(reg)
@@ -48,13 +47,4 @@ func (reg *registration) buildCtor() {
 	reg.ctor = func(core.IScope) (reflect.Value, error) {
 		return reg.value, nil
 	}
-}
-
-func (reg *registration) buildCtorWithHook() {
-	t := reg.key.Type
-	current := reg.ctor
-
-	current = hook.CheckAppendPostInjectHookCtor(t, current)
-
-	reg.ctor = current
 }
