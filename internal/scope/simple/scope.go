@@ -65,6 +65,48 @@ func (s *Scope) InvokeInstance(key core.TypeNameKey) (any, error) {
 
 // sort by dependency depth, shallowest first.
 func (s *Scope) InvokeInstanceAsMany(key core.TypeNameKey) iter.Seq2[any, error] {
+	regs := s.collectMatchingRegistrations(key)
+
+	return func(yield func(any, error) bool) {
+		returned := make(map[core.TypeNameKey]struct{})
+
+		for _, reg := range regs {
+			// Handle Duplicate Registrations and Aliases
+			concreteKey := reg.Key()
+			if a, ok := reg.(core.RegistrationAlias); ok {
+				// Handle alias
+				concreteKey = a.AliasOf()
+			}
+			if _, ok := returned[concreteKey]; ok {
+				continue
+			}
+
+			if val, ok := s.GetInstance(concreteKey); ok {
+				returned[concreteKey] = struct{}{}
+				if !yield(val, nil) {
+					return
+				}
+				continue
+			}
+
+			ins, err := reg.Ctor(s)
+			if err != nil {
+				if !yield(nil, err) {
+					return
+				}
+				continue
+			}
+			val := ins.Interface()
+			s.WriteInstance(concreteKey, val)
+			if !yield(val, nil) {
+				returned[concreteKey] = struct{}{}
+				return
+			}
+		}
+	}
+}
+
+func (s *Scope) collectMatchingRegistrations(key core.TypeNameKey) []core.Registration {
 	var regs []core.Registration
 	for reg := range s.IterRegistration() {
 		_key := reg.Key()
@@ -83,28 +125,5 @@ func (s *Scope) InvokeInstanceAsMany(key core.TypeNameKey) iter.Seq2[any, error]
 	slices.SortFunc(regs, func(a, b core.Registration) int {
 		return a.DependencyDepth() - b.DependencyDepth()
 	})
-
-	return func(yield func(any, error) bool) {
-		for _, reg := range regs {
-			if val, ok := s.GetInstance(reg.Key()); ok {
-				if !yield(val, nil) {
-					return
-				}
-				continue
-			}
-
-			ins, err := reg.Ctor(s)
-			if err != nil {
-				if !yield(nil, err) {
-					return
-				}
-				continue
-			}
-			val := ins.Interface()
-			s.WriteInstance(reg.Key(), val)
-			if !yield(val, nil) {
-				return
-			}
-		}
-	}
+	return regs
 }

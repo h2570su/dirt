@@ -3,6 +3,7 @@ package dirt
 import (
 	"github.com/h2570su/dirt/core"
 	"github.com/h2570su/dirt/internal"
+	"github.com/h2570su/dirt/internal/provide/byalias"
 	"github.com/h2570su/dirt/internal/provide/byctor"
 	"github.com/h2570su/dirt/internal/provide/bystruct"
 	"github.com/h2570su/dirt/internal/provide/byvalue"
@@ -54,5 +55,15 @@ func ProvideValue[T any](value T, opts ...core.Option) nope {
 		opt = o(opt)
 	}
 	byvalue.ProvideValue(value, opt)
+	return _nope
+}
+
+// ProvideAs registers the value prototype of the target type as an interface.
+func ProvideAs[T any, I any](opts ...core.Option) nope {
+	opt := defaultOptions
+	for _, o := range opts {
+		opt = o(opt)
+	}
+	byalias.ProvideAs[T, I](opt)
 	return _nope
 }

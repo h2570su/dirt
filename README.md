@@ -45,7 +45,7 @@ So I want to use injection by field as the major way, and ctor is just a supplem
   - **Interface dependency arguments are not supported currently.**
 - `ProvideValue[T any](value T, opts ...dirt.Option)`
   - Register a value prototype directly.
-- `ProvideAs[T any, I any](opts ...dirt.Option)` **(Not implemented yet)**
+- `ProvideAs[T any, I any](opts ...dirt.Option)`
   - Register type `T` as interface/base type `I`.
   - `Invoke[I]` will return `T` instance, but `InvokeAs[I]` and `InvokeAsMany[I]` stay the same.
 
@@ -59,6 +59,7 @@ So I want to use injection by field as the major way, and ctor is just a supplem
   - Resolve as interface/base type and return one best match.
 - `InvokeAsMany[T](opts ...dirt.Option) iter.Seq2[T, error]`
   - Iterate over all matches as `T`.
+  - If `T:I` is an interface, and a `ProvideAs[T, I]` is registered, only the T instance will be returned, I Registration will be ignored.
 
 ### Options & Scope
 

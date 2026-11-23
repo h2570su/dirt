@@ -36,3 +36,10 @@ type Registration interface {
 	// DirectDeps returns the direct dependencies of the registration, which is used for cycle detection.
 	DirectDeps() []TypeNameKey
 }
+
+// IRegistrationAlias
+type RegistrationAlias interface {
+	Registration
+	// AliasOf returns the key of the registration that this registration is an alias of.
+	AliasOf() TypeNameKey
+}
