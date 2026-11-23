@@ -73,7 +73,7 @@ func (reg *registration) Ctor(s core.IScope) (reflect.Value, error) {
 		return reflect.Value{}, fmt.Errorf("dirt: type: %s has unsatisfied dependency: %v", reg.key.Type.String(), reg.needed.String())
 	}
 
-	ins, err := s.InvokeInstance(reg.needed)
+	ins, err := reg.ctor.Ctor(s)
 	if err != nil {
 		return reflect.Value{}, fmt.Errorf(
 			"dirt: failed to construct type: %s required by %s, error: %w",
@@ -81,5 +81,5 @@ func (reg *registration) Ctor(s core.IScope) (reflect.Value, error) {
 		)
 	}
 
-	return reflect.ValueOf(ins).Convert(reg.key.Type), nil
+	return ins.Convert(reg.key.Type), nil
 }
