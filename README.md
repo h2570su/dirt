@@ -77,6 +77,7 @@ So I want to use injection by field as the major way, and ctor is just a supplem
   - Mark nested struct groups for recursive field injection.
 - `dirt.IPostInjectHook`
   - Implement `PostInject() error` to run post-injection initialization.
+  - Implement `PostInject()` if you want to do some initialization that won't produces any error.
 
 ## Appendix
 
