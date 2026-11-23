@@ -1,7 +1,9 @@
 package byalias_test
 
 import (
+	"fmt"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 
@@ -176,4 +178,23 @@ func TestProvideValueNamed(t *testing.T) {
 			t.Fatalf("unexpected value: %s", i.Foo())
 		}
 	})
+}
+
+func TestLoop(t *testing.T) {
+	validate := func() {
+		if r := recover(); r != nil {
+			if !strings.Contains(fmt.Sprint(r), "circular dependency detected") {
+				t.Fatalf("unexpected panic message: %s", fmt.Sprint(r))
+			}
+		}
+	}
+	defer validate()
+
+	type A interface{ Foo() } //nolint:iface
+	type B interface{ Foo() } //nolint:iface
+	type C interface{ Foo() } //nolint:iface
+
+	dirt.ProvideAs[A, B]()
+	dirt.ProvideAs[B, C]()
+	dirt.ProvideAs[C, A]()
 }

@@ -78,10 +78,12 @@ func (s *Registry) IterRegistration() iter.Seq[core.Registration] {
 }
 
 func (s *Registry) WriteRegistration(reg core.Registration) {
-	// Loop detect after resolved dependencies
-	defer s.loopDetect()
-	// Resolve dependencies after writing the registration.
-	defer s.resolveDependencies()
+	defer func() {
+		// Loop detect after resolved dependencies
+		s.loopDetect()
+		// Resolve dependencies after writing the registration.
+		s.resolveDependencies()
+	}()
 
 	s.lock.Lock()
 	defer s.lock.Unlock()
