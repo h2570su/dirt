@@ -213,6 +213,7 @@ func (reg *registration) buildCtor() {
 			if dep.individual {
 				ins, err := dep.satisfiedBy.Ctor(s)
 				if err == nil {
+					ins = s.OnInjecting(ins, reg.key.Type)
 					dep.locateFn(instance).Set(ins)
 				} else if !dep.optional { // If the dependency is not optional, return error
 					return reflect.Value{}, fmt.Errorf(
@@ -225,14 +226,18 @@ func (reg *registration) buildCtor() {
 
 			// Check if the dependency instance is already created
 			if ins, ok := s.GetInstance(dep.key); ok {
-				dep.locateFn(instance).Set(reflect.ValueOf(ins))
+				insRv := reflect.ValueOf(ins)
+				insRv = s.OnInjecting(insRv, reg.key.Type)
+				dep.locateFn(instance).Set(insRv)
 				continue
 			}
 
 			// If not, invoke the dependency
 			ins, err := s.InvokeInstance(dep.key)
 			if err == nil {
-				dep.locateFn(instance).Set(reflect.ValueOf(ins))
+				insRv := reflect.ValueOf(ins)
+				insRv = s.OnInjecting(insRv, reg.key.Type)
+				dep.locateFn(instance).Set(insRv)
 			} else if !dep.optional { // If the dependency is not optional, return error
 				return reflect.Value{},
 					fmt.Errorf(

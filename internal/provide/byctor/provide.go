@@ -180,7 +180,9 @@ func (reg *registration) buildCtor() {
 				}
 				ins = _ins
 			}
-			args[i] = reflect.ValueOf(ins)
+			insRv := reflect.ValueOf(ins)
+			insRv = s.OnInjecting(insRv, reg.key.Type)
+			args[i] = insRv
 		}
 		got := reg.fn.Call(args)
 		if returnsErr && !got[1].IsNil() {

@@ -12,31 +12,29 @@ var _ core.IHooks = &Hooks{}
 type Hooks struct {
 	lock sync.RWMutex
 
-	onInjecting core.HookFnOnInjecting
+	onInjecting []core.HookOnInjecting
 	onCtorBuilt core.HookFnCtorBuilt
 }
 
-func (s *Hooks) HookOnInjecting(hookFn core.HookFnOnInjecting) {
+func (s *Hooks) HookOnInjecting(hookFn core.HookOnInjecting) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	ori := s.onInjecting
-	if ori == nil {
-		s.onInjecting = hookFn
-		return
-	}
-	s.onInjecting = func(from reflect.Value, dstT reflect.Type) reflect.Value {
-		from = ori(from, dstT)
-		return hookFn(from, dstT)
-	}
+	s.onInjecting = append(s.onInjecting, hookFn)
 }
 
 func (s *Hooks) OnInjecting(from reflect.Value, dstT reflect.Type) reflect.Value {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	if s.onInjecting == nil {
+	if len(s.onInjecting) == 0 {
 		return from
 	}
-	return s.onInjecting(from, dstT)
+	for _, hook := range s.onInjecting {
+		if from.Type() != hook.T {
+			continue
+		}
+		from = hook.Fn(from, dstT)
+	}
+	return from
 }
 
 func (s *Hooks) HookOnCtorBuilt(hookFn core.HookFnCtorBuilt) {

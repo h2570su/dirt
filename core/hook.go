@@ -3,13 +3,16 @@ package core
 import "reflect"
 
 type (
-	HookFnOnInjecting = func(from reflect.Value, dstT reflect.Type) (to reflect.Value)
-	HookFnCtorBuilt   = func(t reflect.Type, from Ctor) (to Ctor)
+	HookOnInjecting = struct {
+		T  reflect.Type
+		Fn func(from reflect.Value, dstT reflect.Type) (to reflect.Value)
+	}
+	HookFnCtorBuilt = func(t reflect.Type, from Ctor) (to Ctor)
 )
 
 type IHooks interface {
 	// HookOnInject registers hook for post-injecting
-	HookOnInjecting(HookFnOnInjecting)
+	HookOnInjecting(HookOnInjecting)
 	// OnInjectingFunc returns the current on-injecting hook
 	OnInjecting(from reflect.Value, dstT reflect.Type) (to reflect.Value)
 

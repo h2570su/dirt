@@ -88,6 +88,10 @@ So I want to use injection by field as the major way, and ctor is just a supplem
 
 Default Global Scope was attached these two hooks by default.
 
+- `dirt.hooks.HookOnInjecting`
+  - Useful for modifying the injection process, e.g., transforming values before they are injected.
+  - Like `*slog.Logger.With(...)*slog.Logger`
+
 ## Appendix
 
 ### Lifecycle management
