@@ -70,13 +70,23 @@ So I want to use injection by field as the major way, and ctor is just a supplem
 - `NewScopeWithGlobalRegistry() *dirt.Scope`
   - Create a new scope with the global registry, so it can see all global registrations but manage its own instances.
 
-### Struct Indicators & Hook
+### Struct Indicators
 
 - `dirt.InjectingGroup`
   - Mark nested struct groups for recursive field injection.
-- `dirt.IPostInjectHook`
-  - Implement `PostInject() error` to run post-injection initialization.
-  - Implement `PostInject()` if you want to do some initialization that won't produces any error.
+
+### Hook
+
+- `dirt.hooks.HookCheckAppendPostInject`
+  - It hooks and modifies the constructor to append post-injection logic, if the resulting value (service) implements:
+    - `PostInject() error` to run post-injection initialization.
+    - `PostInject()` if you want to do some initialization that won't produces any error.
+- `dirt.hooks.CheckPotentialInjectableMissingTag`
+  - Checks for potential missing `dirt` tags on constructed value (service).
+  - If a field is not tagged with `dirt`, but the type was in dirt's registry, it will be an error to notify user
+  - To ignore it, just add `dirt:"-"` to the field tag.
+
+Default Global Scope was attached these two hooks by default.
 
 ## Appendix
 
